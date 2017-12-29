@@ -25,7 +25,7 @@
 \usepackage{hyperref}
 \hypersetup{unicode=true,
             pdftitle={Sequential Stein Variational Gradient Descent for Time Series Model Estimation},
-            pdfauthor={Ray, Gibson, and Reich in some order},
+            pdfauthor={Gibson, Reich, and Ray in some order},
             pdfborder={0 0 0},
             breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
@@ -77,7 +77,7 @@
 Estimation}
   \pretitle{\vspace{\droptitle}\centering\huge}
   \posttitle{\par}
-  \author{Ray, Gibson, and Reich in some order}
+  \author{Gibson, Reich, and Ray in some order}
   \preauthor{\centering\large\emph}
   \postauthor{\par}
   \predate{\centering\large\emph}
@@ -96,6 +96,7 @@ Particle filtering suffers from limitations including:
 \begin{itemize}
 \item particle depletion
 \item predict steps can be far from filtered steps?
+\item high Monte Carlo variability
 \end{itemize}
 
 These can be addressed with some success by various strategies including
@@ -228,6 +229,133 @@ log of the density we want to estimate with respect to \(x_{t}\).
 &\qquad \approx \frac{\frac{d}{d x_t} \sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)} \\
 &\qquad = \frac{\sum_{x_{t-1|t-1}^{(k)}} \frac{d}{d x_t} f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)}
 \end{align*}
+
+\subsection{Simulation Studies}\label{simulation-studies}
+
+We will do several simulation studies, divided into 2 groups:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  illustrating scenarios in which common particle filtering methods
+  struggle, but SSVGD has better chances
+
+  \begin{enumerate}
+  \def\labelenumii{\alph{enumii}.}
+  \tightlist
+  \item
+    bad initalization
+  \item
+    normal-poisson filtering, seasonal model
+  \item
+    one other, more complex?
+  \end{enumerate}
+\item
+  demonstrating accuracy (compare to true states, exactly computed
+  filtered states, and likelihood)
+
+  \begin{enumerate}
+  \def\labelenumii{\alph{enumii}.}
+  \tightlist
+  \item
+    Kalman filter
+  \item
+    something nonlinear where we can do exact computations (brute force
+    for short time series??)?
+  \end{enumerate}
+\end{enumerate}
+
+\subsubsection{1. a. Bad Initialization}\label{a.-bad-initialization}
+
+\paragraph{Simulation Study Design}\label{simulation-study-design}
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g.~number of simulation
+runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison. 2 PF
+implementations, one non-linear KF implementation, and SSVGD
+
+\paragraph{Results}\label{results}
+
+Paragraph, referencing one figure and one table, summarizing results
+
+\subsubsection{1. b. Normal-Poisson seasonal
+model}\label{b.-normal-poisson-seasonal-model}
+
+\paragraph{Simulation Study Design}\label{simulation-study-design-1}
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g.~number of simulation
+runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison. 2 PF
+implementations, one non-linear KF implementation, and SSVGD
+
+\paragraph{Results}\label{results-1}
+
+Paragraph, referencing one figure and one table, summarizing results
+
+\subsubsection{1. c. One other, more
+complex?}\label{c.-one-other-more-complex}
+
+\paragraph{Simulation Study Design}\label{simulation-study-design-2}
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g.~number of simulation
+runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison. 2 PF
+implementations, one non-linear KF implementation, and SSVGD
+
+\paragraph{Results}\label{results-2}
+
+Paragraph, referencing one figure and one table, summarizing results
+
+\subsubsection{2. a. Kalman Filter}\label{a.-kalman-filter}
+
+\paragraph{Simulation Study Design}\label{simulation-study-design-3}
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g.~number of simulation
+runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison. 2 PF
+implementations, one non-linear KF implementation, and SSVGD
+
+\paragraph{Results}\label{results-3}
+
+Paragraph, referencing one figure and one table, summarizing results
+
+\subsubsection{2. b. something nonlinear where we can do exact
+computations (brute force for short time
+series??)?}\label{b.-something-nonlinear-where-we-can-do-exact-computations-brute-force-for-short-time-series}
+
+\paragraph{Simulation Study Design}\label{simulation-study-design-4}
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g.~number of simulation
+runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison. 2 PF
+implementations, one non-linear KF implementation, and SSVGD
+
+\paragraph{Results}\label{results-4}
+
+Paragraph, referencing one figure and one table, summarizing results
+
+\subsection{Application}\label{application}
+
+Example model with real data. fairly real model, but not thaaaaaat
+complex.
+
+\subsection{Discussion}\label{discussion}
 
 
 \end{document}

@@ -1,6 +1,6 @@
 ---
 title: 'Sequential Stein Variational Gradient Descent for Time Series Model Estimation'
-author: "Ray, Gibson, and Reich in some order"
+author: "Gibson, Reich, and Ray in some order"
 date: "December 3, 2017"
 output:
   pdf_document:
@@ -29,6 +29,7 @@ Particle filtering suffers from limitations including:
 \begin{itemize}
 \item particle depletion
 \item predict steps can be far from filtered steps?
+\item high Monte Carlo variability
 \end{itemize}
 
 These can be addressed with some success by various strategies including whatever it's called when you add new particles near current particles if effective number of particles is too small.
@@ -119,3 +120,93 @@ We will apply SVGD to iteratively obtain samples from the updated distributions 
 &\qquad \approx \frac{\frac{d}{d x_t} \sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)} \\
 &\qquad = \frac{\sum_{x_{t-1|t-1}^{(k)}} \frac{d}{d x_t} f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)}
 \end{align*}
+
+## Simulation Studies
+
+We will do several simulation studies, divided into 2 groups:
+
+1. illustrating scenarios in which common particle filtering methods struggle, but SSVGD has better chances
+    a. bad initalization
+    a. normal-poisson filtering, seasonal model
+    a. one other, more complex?
+1. demonstrating accuracy (compare to true states, exactly computed filtered states, and likelihood)
+    a. Kalman filter
+    a. something nonlinear where we can do exact computations (brute force for short time series??)?
+
+### 1. a. Bad Initialization
+
+#### Simulation Study Design
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
+
+#### Results
+
+Paragraph, referencing one figure and one table, summarizing results
+
+### 1. b. Normal-Poisson seasonal model
+
+#### Simulation Study Design
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
+
+#### Results
+
+Paragraph, referencing one figure and one table, summarizing results
+
+### 1. c. One other, more complex?
+
+#### Simulation Study Design
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
+
+#### Results
+
+Paragraph, referencing one figure and one table, summarizing results
+
+### 2. a. Kalman Filter
+
+#### Simulation Study Design
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
+
+#### Results
+
+Paragraph, referencing one figure and one table, summarizing results
+
+### 2. b. something nonlinear where we can do exact computations (brute force for short time series??)?
+
+#### Simulation Study Design
+
+Paragraph with data generating process, written with math.
+
+Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
+
+Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
+
+#### Results
+
+Paragraph, referencing one figure and one table, summarizing results
+
+## Application
+
+Example model with real data.  fairly real model, but not thaaaaaat complex.
+
+## Discussion
+
+
