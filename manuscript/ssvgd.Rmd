@@ -1,0 +1,121 @@
+---
+title: 'Sequential Stein Variational Gradient Descent for Time Series Model Estimation'
+author: "Ray, Gibson, and Reich in some order"
+date: "December 3, 2017"
+output:
+  pdf_document:
+    fig_height: 2.7
+    fig_width: 6.5
+    keep_tex: yes
+header-includes:
+   - \usepackage{multicol}
+---
+
+
+```{r, include=FALSE}
+require(knitr)
+
+options(digits=4)
+
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+```
+
+# Introduction
+
+Particle filtering suffers from limitations including:
+\begin{itemize}
+\item particle depletion
+\item predict steps can be far from filtered steps?
+\end{itemize}
+
+These can be addressed with some success by various strategies including whatever it's called when you add new particles near current particles if effective number of particles is too small.
+
+Here we propose another approach that we hope will do better than particle filtering.  In this approach, Stein Variational Gradient Descent (SVGD) is used to sequentially estimate the distribution of state variables in each time step, conditional on observed data up through that time.  This method should overcome problems with particle depletion and predictions that are far from the true states that come up with particle filtering.
+
+# Method Derivation
+
+Let $x_t$, $t = 1, \ldots, T$ denote an unobserved state vector at each time $t$.  For now, this state has to be continuous but we might be able to discretize later?
+
+Let $y_t$, $t = 1, \ldots, T$ denote an observed value at each time $t$.
+
+The details about when we start observing the $y_t$'s relative to the first $x_t$ are unimportant.
+
+For now, we're just going to write down the method to evaluate the likelihood for a fixed set of parameters.  This is not explicitly Bayesian or frequentist.
+
+But we could likely differentiate the approximation to the likelihood derived here with respect to parameters $\theta$ and plug that into SVGD to estimate the posterior?
+
+## Model Structure
+
+States:
+\begin{itemize}
+\item $X_1 \sim g_1(x_1 ; \xi)$
+\item $X_t \vert X_{t-1} \sim g(x_t \vert x_{t - 1} ; \xi)$ for all $t = 2, \ldots, T$
+\end{itemize}
+
+Observations:
+\begin{itemize}
+\item $Y_t \vert X_{t} \sim h(y_t | x_t ; \zeta)$
+\end{itemize}
+
+Here, $g_1(\cdot)$ and $g(\cdot)$ are appropriately defined probability density functions depending on parameters $\xi$ and $h(\cdot)$ is an appropriately defined probability density function or probability mass function depending on parameters $\zeta$.
+
+Define $\theta = (\xi, \zeta)$ to be the full set of model parameters.
+
+## Overview of SVGD
+
+SVGD can be used to estimate a (continuous only?) distribution (as a mixture of normals?  Is that right?).  It requires as inputs a set of initial values for centers of the normals (?  or are they just particles?) and a gradient of the density at a particular particle/center point.
+
+## Filtering
+
+There are two types of filtering:
+
+1. sample of particles $x_{1:T}^{(k)} \sim f(x_{1:T} | y_{1:T})$
+2. sample of particles $x_{t}^{(k)} \sim f(x_{t} | y_{1:t})$ for each $t = 1, \ldots, T$
+
+Let's look at the second one.  Assume we have a sample $x_{t-1}^{(k)} \sim f(x_{t-1} | y_{1:t-1})$
+
+\begin{align*}
+p(x_{t} | y_{1:t}) &= \frac{f(x_t, y_t | y_{1:t-1})}{f(y_t | y_{1:t-1})} \\
+ &\propto f(x_t, y_t | y_{1:t-1}) \\
+ &= f(y_t | x_t) f(x_t | y_{1:t-1}) \\
+ &= f(y_t | x_t) \int f(x_t, x_{t-1} | y_{1:t-1}) d x_{t-1} \\
+ &= f(y_t | x_t) \int f(x_t | x_{t - 1}) f(x_{t-1} | y_{1:{t-1}}) dx_{t-1} \\
+ &\approx f(y_t | x_t) \sum_{x_{t-1}^{(k)}} f(x_t | x_{t - 1}^{(k)})
+\end{align*}
+
+So $\log\{p(x_{t} | y_{1:t})\}$ is approximately proportional to $\log\{f(y_t | x_t)\} + \log\{\sum_{x_{t-1}^{(k)}} f(x_t | x_{t - 1}^{(k)})\}$
+
+
+## Evaluating the Likelihood via Filtering
+
+Our goal (for now) is to evaluate the likelihood function
+
+\begin{align*}
+L(\theta \vert y_{1:T}) &= f(y_{1:T} ; \theta) \\
+&= f(y_1 ; \theta) \prod_{t = 2}^T f(y_t \vert y_{1:t-1} ; \theta) \\
+&= \int_{x_1} f(y_1, x_1 ; \theta) d x_1 \prod_{t = 2}^T \int_{x_t} f(y_t, x_t \vert y_{1:t-1} ; \zeta) d x_{t} \\
+&= \int_{x_1} f(y_1 \vert x_1 ; \zeta) f(x_1 ; \xi) d x_1 \prod_{t = 2}^T \int_{x_t} f(y_t \vert x_t, y_{1:t-1} ; \zeta) f(x_t \vert y_{1:t-1} ;\xi) d x_t \\
+&= \int_{x_1} f(y_1 \vert x_1 ; \zeta) f(x_1 ; \xi) d x_1 \prod_{t = 2}^T \int_{x_t} f(y_t \vert x_t ; \zeta) f(x_t \vert y_{1:t-1} ;\xi) d x_t \\
+&\approx \sum_{x_1^{(k)}} f(y_1 \vert x_1^{(k)} ; \zeta) \prod_{t = 2}^T \sum_{x_{t|t-1}^{(k)}} f(y_t \vert x_{t|t-1}^{(k)} ; \zeta) \text{, where}
+\end{align*}
+
+\begin{align*}
+x_1^{(k)} \sim f(x_1 ; \xi) \text{ and }
+x_{t|t-1}^{(k)} \sim f(x_t \vert y_{1:t-1} ;\xi)
+\end{align*}
+
+Note that if we have a sample $x_{t-1|t-1}^{(k)} \sim f(x_{t-1} \vert y_{1:t-1} ;\xi)$, we can obtain a sample $x_{t|t-1}^{(k)} \sim f(x_t \vert y_{1:t-1} ;\xi)$ from the transition density.
+
+We will apply SVGD to iteratively obtain samples from the updated distributions $x_{t|t}^{(k)} \sim f(x_{t} \vert y_{1:t} ;\xi)$ starting from samples $x_{t-1|t-1}^{(k)} \sim f(x_{t-1} \vert y_{1:t-1} ;\xi)$ at the previous time step.  To do this, we need to obtain the derivative of the log of the density we want to estimate with respect to $x_{t}$.
+
+\begin{align*}
+&\frac{d}{d x_t} \log\{f(x_{t} \vert y_{1:t}; \xi)\} = \frac{d}{d x_t} \log\left\{\frac{f(x_t \vert y_{1:t-1}) f(y_t \vert x_t, y_{1:t-1})}{f(y_t \vert y_{t:t-1})}\right\} \\
+&\qquad = \frac{d}{d x_t} \left[ \log\left\{f(x_t \vert y_{1:t-1})\right\} + \log \left\{f(y_t \vert x_t)\right\} - \log\left\{f(y_t \vert y_{t:t-1})\right\} \right] \\
+&\qquad = \frac{d}{d x_t} \log\left\{\int_{x_{t-1}}f(x_{t} \vert x_{t-1}, y_{1:t-1}; \xi)f(x_{t-1} \vert y_{1:t-1}; \xi) d x_{t-1} \right\} + \frac{d}{d x_t} \log \left\{ f(y_t \vert x_t) \right\} \\
+&\qquad = \frac{\frac{d}{d x_t} \int_{x_{t-1}}f(x_{t} \vert x_{t-1}; \xi)f(x_{t-1} \vert y_{1:t-1}; \xi) d x_{t-1}}{\int_{x_{t-1}}f(x_{t} \vert x_{t-1}; \xi)f(x_{t-1} \vert y_{1:t-1}; \xi) d x_{t-1}} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)} \\
+&\qquad \approx \frac{\frac{d}{d x_t} \sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)} \\
+&\qquad = \frac{\sum_{x_{t-1|t-1}^{(k)}} \frac{d}{d x_t} f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)}
+\end{align*}
