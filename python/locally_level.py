@@ -82,6 +82,6 @@ if __name__ == '__main__':
       filtered_covs.append(np.var(theta,axis=0)[0])
     
     return_list = filtered_means + filtered_covs
-    myList = ','.join(map(str,np.array(filtered_means).flatten() ))
+    myList = ','.join(map(str,np.array(total_thetas).flatten() ))
     print (myList)
    

@@ -41,7 +41,10 @@ for (i in seq(1,length(ssvgdForecasts)) ){
 }
 
 
-meanSsvgdForecasts <- exp(first_state_forecasts)
+aggregate_forecast <- matrix(first_state_forecasts,nrow=5,ncol=10,byrow = TRUE)
+
+
+meanSsvgdForecasts <-c()
 lowPiSsvgdForecasts <- c()
 highPiSsvgdForecasts <- c()
 
@@ -51,3 +54,33 @@ for (i in 1:nrow(aggregate_forecast)){
   lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[2])
   highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[9])
 }
+
+lowPf <-summ_smc$x$f$quant$`0.025`
+highPf <- summ_smc$x$f$quant$`0.975`
+
+
+
+p1<- ggplot() 
+p1<- p1+ geom_line(data = data.frame(x=seq(1,length(summ_smc$x$f$mean)),y=exp(summ_smc$x$f$mean)), aes(x = x, y = y), color = "red") +
+  
+  geom_line(data=data.frame(x=seq(1,length(ma_data)),y=ma_data), aes(x = x, y = y), color = "cornflowerblue") +
+  geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=exp(summ_smc$x$f$mean)),aes(x=x,ymin=exp(lowPf),ymax=exp(highPf)),alpha=0.3)+
+  xlab('data_date') +
+  ylab('count') + ylim(low=-10,high=10) 
+print(p1)
+
+
+
+
+p<- ggplot() 
+p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=exp(meanSsvgdForecasts)), aes(x = x, y = y), color = "red") +
+  
+  geom_line(data=data.frame(x=seq(1,length(ma_data)),y=ma_data), aes(x = x, y = y), color = "cornflowerblue") +
+  geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=exp(meanSsvgdForecasts)),aes(x=x,ymin=exp(lowPiSsvgdForecasts),ymax=exp(highPiSsvgdForecasts),alpha=0.3))+
+  xlab('data_date') +
+  ylab('count') +ylim(low=-10,high=10) 
+print(p)
+
+library(cowplot)
+plot_grid(p, p1, labels = c("SVGD","PF"))
+
