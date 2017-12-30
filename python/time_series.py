@@ -52,8 +52,17 @@ if __name__ == '__main__':
     total_thetas = []
     n_iter = 1000
 
-    time_series = np.round(np.power(np.sin(np.arange(10)+1),2)*10 + 10)
+    time_series = []#np.round(np.power(np.sin(np.arange(10)+1),2)*10 + 10)
+    input_exists = True
+    i = 1
+    while input_exists:
+        try:
+            time_series.append(float(sys.argv[i].replace(",","")))
+            i+=1
+        except:
+            input_exists =False
 
+   
     model = StateSpaceModel()
     num_particles = 10
     x0 = np.random.normal(0,10,[num_particles,2]).astype(float)

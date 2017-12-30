@@ -31,8 +31,11 @@ seasonal_model_summary = biips_summary(seasonal_out_smc, probs=c(.025, .975))
 
 Sys.setenv(PATH = paste("/Users/gcgibson/anaconda/bin", Sys.getenv("PATH"), sep=":"))
 
-exec_str <- 'python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/time_series.py'
+exec_str <- 'python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/seasonal.py '
+exec_str <- paste(exec_str, toString(ma_data))
+print (exec_str)
 ssvgdForecasts <- system(exec_str,intern=TRUE,wait = TRUE)
+
 
 #ssvgdForecasts <- strsplit(ssvgdForecasts,",")
 #ssvgdForecasts <- as.numeric(unlist(ssvgdForecasts))
@@ -60,7 +63,7 @@ for (i in 1:nrow(aggregate_forecast)){
 }
 
 lowPf <- pmax(0,seasonal_model_summary$x1$f$quant$`0.025`)
-highPf <- pmin(ln(100),seasonal_model_summary$x1$f$quant$`0.975`)
+highPf <- pmin(log(100),seasonal_model_summary$x1$f$quant$`0.975`)
 
 
 p1<- ggplot() 

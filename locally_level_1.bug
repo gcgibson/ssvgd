@@ -1,0 +1,15 @@
+var x[t_max], y[t_max]
+
+
+model
+{
+  
+  x[1] ~ dnorm(mean_x_init, 1) 
+  y[1] ~ dpois(exp(x[1]))
+  
+  for (t in 2:t_max)
+  {
+    x[t] ~ dnorm(x[t-1], 1) 
+    y[t] ~ dpois(exp(x[t]))
+  }
+}

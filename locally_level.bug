@@ -1,0 +1,15 @@
+var x[t_max], y[t_max]
+
+
+model
+{
+  
+  x[1] ~ dnorm(mean_x_init, 1) 
+  y[1] ~ dnorm(x[1],.00000000001)
+  
+  for (t in 2:t_max)
+  {
+    x[t] ~ dnorm(x[t-1], 10) 
+    y[t] ~ dnorm(x[t],.000000001)
+  }
+}
