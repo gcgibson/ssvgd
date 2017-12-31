@@ -1,3 +1,4 @@
+library(ggplot2)
 require(rbiips)
 library(MCMCpack)
 locally_level_model_file = '/Users/gcgibson/Stein-Variational-Gradient-Descent/locally_level_1.bug' # BUGS model filename
