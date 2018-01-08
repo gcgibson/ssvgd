@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
 
     model = StateSpaceModel()
-    num_particles = 1000   
+    num_particles = 50   
     x0 = np.random.normal(-10,1,[num_particles,1]).astype(float)
     
     theta = SVGD().update(x0,0,x0,time_series, model.grad_overall, n_iter=n_iter, stepsize=0.01)

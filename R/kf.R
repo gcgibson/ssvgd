@@ -8,9 +8,10 @@ filt<-dlmFilter(data,mod)
 v <- dropFirst(unlist(dlmSvd2var(filt$U.C, filt$D.C)))
 
 
-Sys.setenv(PATH = paste("/Users/gcgibson/anaconda/bin", Sys.getenv("PATH"), sep=":"))
+#Sys.setenv(PATH = paste("/Users/gcgibson/anaconda/bin", Sys.getenv("PATH"), sep=":"))
 
-exec_str <- 'python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py '
+#exec_str <- 'python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py '
+exec_str <- 'python python/locally_level_gaussian.py '
 exec_str <- paste(exec_str, toString(data))
 print (exec_str)
 ssvgdForecasts <- system(exec_str,intern=TRUE,wait = TRUE)
