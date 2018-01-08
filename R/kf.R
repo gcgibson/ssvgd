@@ -7,11 +7,11 @@ filt<-dlmFilter(data,mod)
 
 v <- dropFirst(unlist(dlmSvd2var(filt$U.C, filt$D.C)))
 
+n_part <- 10
 
-#Sys.setenv(PATH = paste("/Users/gcgibson/anaconda/bin", Sys.getenv("PATH"), sep=":"))
-
-#exec_str <- 'python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py '
-exec_str <- 'python python/locally_level_gaussian.py '
+Sys.setenv(PATH = paste("/Users/gcgibson/anaconda/bin", Sys.getenv("PATH"), sep=":"))
+exec_str <- 'python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py '
+#exec_str <- 'python python/locally_level_gaussian.py '
 exec_str <- paste(exec_str, toString(data))
 print (exec_str)
 ssvgdForecasts <- system(exec_str,intern=TRUE,wait = TRUE)
@@ -29,7 +29,7 @@ for (i in seq(1,length(ssvgdForecasts)) ){
 }
 
 
-aggregate_forecast <- matrix(first_state_forecasts,nrow=10,ncol=10,byrow = TRUE)
+aggregate_forecast <- matrix(first_state_forecasts,nrow=length(data),ncol=n_part,byrow = TRUE)
 
 
 meanSsvgdForecasts <-c()
@@ -39,12 +39,9 @@ highPiSsvgdForecasts <- c()
 for (i in 1:nrow(aggregate_forecast)){
   meanSsvgdForecasts <- c(meanSsvgdForecasts,mean(aggregate_forecast[i,]))
   srted <- sort(aggregate_forecast[i,])
-  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[2])
-  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[9])
+  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[round(.05*length(data))+1])
+  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[round(.95*length(data))-1])
 }
-
-lowPf <-summ_smc$x$f$quant$`0.025`
-highPf <- summ_smc$x$f$quant$`0.975`
 
 filter_results <- c(dropFirst(filt$f),11)
 
