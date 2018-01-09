@@ -11,6 +11,7 @@ class SVGD():
         pairwise_dists = squareform(sq_dist)**2
         if h < 0: # if h < 0, using median trick
             h = np.median(pairwise_dists)  
+            
             h = np.sqrt(0.5 * h / np.log(theta.shape[0]+1))
 
         # compute the rbf kernel
@@ -40,6 +41,8 @@ class SVGD():
                 pass
             lnpgrad = dlnprob(theta,theta_t_minus_1,time_series,t)
             # calculating the kernel matrix
+           # h = 0
+           
             kxy, dxkxy = self.svgd_kernel(theta, h = -1)  
             grad_theta = (np.matmul(kxy, lnpgrad) + dxkxy) / x0.shape[0]  
             

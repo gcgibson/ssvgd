@@ -16,8 +16,8 @@ num_particles = 50
 import matplotlib.pyplot as plt
 
 #-(1.0/(2*observation_variance))*(theta_i  -  time_series[t])**2  + np.log(1.0/np.sqrt(np.pi*2*observation_variance))
-observation_variance = .00000000001
-transition_variance = 1000
+observation_variance = .1
+transition_variance = 10
 seasonality = 4
 
 G = np.matrix([[np.cos(2*np.pi/seasonality),np.sin(2*np.pi/seasonality)],[-np.sin(2*np.pi/seasonality),np.cos(2*np.pi/seasonality)]])
@@ -61,7 +61,7 @@ if __name__ == '__main__':
         except:
             input_exists =False
 
-
+    
     model = StateSpaceModel()
     num_particles = 10
     x0 = np.random.normal(-10,1,[num_particles,1]).astype(float)
@@ -80,10 +80,15 @@ if __name__ == '__main__':
       total_thetas.append(theta)
       filtered_means.append(np.mean(theta,axis=0)[0])
       filtered_covs.append(np.var(theta,axis=0)[0])
-    
-    return_list = filtered_means + filtered_covs
+    total_thetas = np.array(total_thetas)
+    #return_list = filtered_means + filtered_covs
     myList = ','.join(map(str,np.array(total_thetas).flatten() ))
     print (myList)
     #print (filtered_means)
     #print (filtered_covs)
-   
+    
+    #import matplotlib.pyplot as plt
+    #plt.plot(range(len(total_thetas)),total_thetas.mean(axis=1))
+   #print (np.percentile(total_thetas,5,axis=1).shape)
+    #plt.fill_between(range(len(total_thetas)),np.percentile(total_thetas,5,axis=1).reshape((-1,)),np.percentile(total_thetas,95,axis=1).reshape((-1,)),alpha=.2)
+    #plt.show()
