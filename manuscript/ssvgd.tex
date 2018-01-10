@@ -85,51 +85,82 @@ Estimation}
   \date{December 3, 2017}
 
 \usepackage{multicol}
+\usepackage{amssymb}
 
 \begin{document}
 \maketitle
 
 \section{Introduction}\label{introduction}
 
-Particle filtering suffers from limitations including:
+Particle filtering suffers from two main practical disadvantages. The
+first is particle depletion, where the number of effective particles
+with non-neglibile weight becomes too small. This has the effect of
+concentrating the mass around a small number of particles, leading to
+poor estimates of the target distribution. The second is the running
+time of the algorithm. A cursory analysis reveals that each particle is
+updated once per time step in the time series, and once per re-sampling
+step, to mitigate the issue above. If we imagine the order of particles
+is close to the length of the time series, we see that run-time is
+\(O(n^3)\).
 
-\begin{itemize}
-\item particle depletion
-\item predict steps can be far from filtered steps?
-\item high Monte Carlo variability
-\end{itemize}
+We propose another approach that we hope will do better than particle
+filtering in practice. In this approach, Stein Variational Gradient
+Descent (SVGD) is used to sequentially estimate the distribution of
+state variables in each time step, conditional on observed data up
+through that time. This method should overcome problems with particle
+depletion and excessive run-times for long time-series.
 
-These can be addressed with some success by various strategies including
-whatever it's called when you add new particles near current particles
-if effective number of particles is too small.
+\subsection{Overview of SVGD}\label{overview-of-svgd}
 
-Here we propose another approach that we hope will do better than
-particle filtering. In this approach, Stein Variational Gradient Descent
-(SVGD) is used to sequentially estimate the distribution of state
-variables in each time step, conditional on observed data up through
-that time. This method should overcome problems with particle depletion
-and predictions that are far from the true states that come up with
-particle filtering.
+Stein Variational Gradient Descent can be used to estimate a continuous
+distribution by a set of samples. By iteratively transporting samples
+from an initial distribution in the direction of the likelihood, we are
+able to generate a sample from the target distribution. The usefullness
+of this approximation is apparent in Bayesian statistics, where the
+usually intractable normalizing constant disappears in the gradient. The
+particles are subject to the following gradient ascent procedure.
 
-\section{Method Derivation}\label{method-derivation}
+\[x_t^{(i)} \leftarrow x_{t-1}^{(i)} + \frac{1}{n}\sum_{j=1}^n[ k(x_j,x_{t-1}^{(i)})*\nabla log\ p(x_j) + \nabla k(x_j,,x_{t-1}^{(i)})]\]
 
-Let \(x_t\), \(t = 1, \ldots, T\) denote an unobserved state vector at
-each time \(t\). For now, this state has to be continuous but we might
-be able to discretize later?
+\subsection{Sequential Stein Variational Gradient
+Descent}\label{sequential-stein-variational-gradient-descent}
 
-Let \(y_t\), \(t = 1, \ldots, T\) denote an observed value at each time
-\(t\).
+Suppose we are given a time series \(Y_1,Y_2,...,Y_t\) for
+\(Y \in \mathbb{R}\). We model the sequence as a state-space model
+parameterized by an observation density \(p(y_t | x_t)\) and a
+transition density \(p(x_t | x_{t-1})\) Figure 1.
 
-The details about when we start observing the \(y_t\)'s relative to the
-first \(x_t\) are unimportant.
+\begin{figure}[htbp]
+\centering
+\includegraphics{/Users/gcgibson/Desktop/ssm.png}
+\caption{Caption for the picture.}
+\end{figure}
 
-For now, we're just going to write down the method to evaluate the
-likelihood for a fixed set of parameters. This is not explicitly
-Bayesian or frequentist.
+We are interested in the filtering distribution
+\(p(x_1,...,x_n | y_1,...,y_n)\) which by Bayes formula is
+\[p(x_1,...,x_n | y_1,...,y_n) = \frac{p(y_1,...,y_n | x_1,...,x_n) p(x_1,...,x_n)}{Z}\].
 
-But we could likely differentiate the approximation to the likelihood
-derived here with respect to parameters \(\theta\) and plug that into
-SVGD to estimate the posterior?
+Because computing the normalizing constant \(Z\) is intractable for many
+choices of \(p(y_t | x_t)\) and \(p(x_t | x_{t-1})\), we must resort to
+monte carlo algorithms. The classic approach that incorporates the
+sequential nature of the data is given by the particle filtering
+algorithm. Particle filtering approximates the filtering density using
+sequential importance sampling. We instead focus on the following
+recursion.
+
+\[p(x_t | y_{1:t}) = \int p(x_{0:t} | y_{1:t})d_{x_0:t-1}\]
+\[=\frac{p(y_t | x_t)}{\int p(y_t|x_t)p(x_t | y_{1:t-1})dx_t}p(x_t | y_{1:t-1})\]
+
+\[\propto p(y_t|x_t)p(x_t | y_{1:t-1})\]
+\[\propto p(y_t|x_t)p(x_t | y_{1:t-1})\]
+\[\propto p(y_t|x_t)\int_{x_{t-1}}p(x_t,x_{t-1} | y_{1:t-1})d_{x_{t-1}}\]
+
+\[\propto p(y_t|x_t)\int_{x_{t-1}}p(x_t |x_{t-1} )p(x_{t-1}| y_{1:t-1})d_{x_{t-1}}\]
+
+which we can approximate recursively as
+\[\propto p(y_t|x_t) \frac{1}{n}\sum_{i=1}^n p(x_t | x_{t-1}^{(i)})\]
+
+(proof in apendix A)
 
 \subsection{Model Structure}\label{model-structure}
 
@@ -152,14 +183,6 @@ probability density functions depending on parameters \(\xi\) and
 probability mass function depending on parameters \(\zeta\).
 
 Define \(\theta = (\xi, \zeta)\) to be the full set of model parameters.
-
-\subsection{Overview of SVGD}\label{overview-of-svgd}
-
-SVGD can be used to estimate a (continuous only?) distribution (as a
-mixture of normals? Is that right?). It requires as inputs a set of
-initial values for centers of the normals (? or are they just
-particles?) and a gradient of the density at a particular
-particle/center point.
 
 \subsection{Filtering}\label{filtering}
 
@@ -356,6 +379,8 @@ Example model with real data. fairly real model, but not thaaaaaat
 complex.
 
 \subsection{Discussion}\label{discussion}
+
+\subsection{Bibliography}\label{bibliography}
 
 
 \end{document}
