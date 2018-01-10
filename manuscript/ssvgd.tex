@@ -86,6 +86,7 @@ Estimation}
 
 \usepackage{multicol}
 \usepackage{amssymb}
+\usepackage{amsmath}
 
 \begin{document}
 \maketitle
@@ -157,10 +158,10 @@ recursion.
 
 \[\propto p(y_t|x_t)\int_{x_{t-1}}p(x_t |x_{t-1} )p(x_{t-1}| y_{1:t-1})d_{x_{t-1}}\]
 
-which we can approximate recursively as
-\[\propto p(y_t|x_t) \frac{1}{n}\sum_{i=1}^n p(x_t | x_{t-1}^{(i)})\]
-
-(proof in apendix A)
+which we can approximate using svgd as
+\[\approx p(y_t|x_t) \frac{1}{n}\sum_{i=1}^n p(x_t | x_{t-1}^{(i)})\] We
+can now estimate \(p(x_{t+1}|y_{1:t+1})\) using the same algebra as
+above. (proof in apendix A)
 
 \subsection{Model Structure}\label{model-structure}
 
@@ -213,163 +214,184 @@ p(x_{t} | y_{1:t}) &= \frac{f(x_t, y_t | y_{1:t-1})}{f(y_t | y_{1:t-1})} \\
 So \(\log\{p(x_{t} | y_{1:t})\}\) is approximately proportional to
 \(\log\{f(y_t | x_t)\} + \log\{\sum_{x_{t-1}^{(k)}} f(x_t | x_{t - 1}^{(k)})\}\)
 
-\subsection{Evaluating the Likelihood via
-Filtering}\label{evaluating-the-likelihood-via-filtering}
+\subsection{Locally Level Gaussian Noise
+Model}\label{locally-level-gaussian-noise-model}
 
-Our goal (for now) is to evaluate the likelihood function
+In order to demonstrate that the approximation is reasonable we evaluate
+the predictive accuracy under an analytically tractable model, the
+locally level Gaussian model. This model takes the form
+\[X_t \sim N(X_{t-1},\sigma_1^2)\] \[Y_t \sim N(X_t, \sigma_2^2)\]
 
-\begin{align*}
-L(\theta \vert y_{1:T}) &= f(y_{1:T} ; \theta) \\
-&= f(y_1 ; \theta) \prod_{t = 2}^T f(y_t \vert y_{1:t-1} ; \theta) \\
-&= \int_{x_1} f(y_1, x_1 ; \theta) d x_1 \prod_{t = 2}^T \int_{x_t} f(y_t, x_t \vert y_{1:t-1} ; \zeta) d x_{t} \\
-&= \int_{x_1} f(y_1 \vert x_1 ; \zeta) f(x_1 ; \xi) d x_1 \prod_{t = 2}^T \int_{x_t} f(y_t \vert x_t, y_{1:t-1} ; \zeta) f(x_t \vert y_{1:t-1} ;\xi) d x_t \\
-&= \int_{x_1} f(y_1 \vert x_1 ; \zeta) f(x_1 ; \xi) d x_1 \prod_{t = 2}^T \int_{x_t} f(y_t \vert x_t ; \zeta) f(x_t \vert y_{1:t-1} ;\xi) d x_t \\
-&\approx \sum_{x_1^{(k)}} f(y_1 \vert x_1^{(k)} ; \zeta) \prod_{t = 2}^T \sum_{x_{t|t-1}^{(k)}} f(y_t \vert x_{t|t-1}^{(k)} ; \zeta) \text{, where}
-\end{align*}
+\begin{verbatim}
+## 
+## Attaching package: 'dlm'
+\end{verbatim}
 
-\begin{align*}
-x_1^{(k)} \sim f(x_1 ; \xi) \text{ and }
-x_{t|t-1}^{(k)} \sim f(x_t \vert y_{1:t-1} ;\xi)
-\end{align*}
+\begin{verbatim}
+## The following object is masked from 'package:ggplot2':
+## 
+##     %+%
+\end{verbatim}
 
-Note that if we have a sample
-\(x_{t-1|t-1}^{(k)} \sim f(x_{t-1} \vert y_{1:t-1} ;\xi)\), we can
-obtain a sample \(x_{t|t-1}^{(k)} \sim f(x_t \vert y_{1:t-1} ;\xi)\)
-from the transition density.
+\begin{verbatim}
+## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py  0.285676619609561, 2.91753012580183, 2.78117622763953, 4.69683824157547, 5.74877016964816, 3.57537019527663, 7.39631203226068, 6.22488628594129, 7.82768183893382, 11.6222569023377"
+\end{verbatim}
 
-We will apply SVGD to iteratively obtain samples from the updated
-distributions \(x_{t|t}^{(k)} \sim f(x_{t} \vert y_{1:t} ;\xi)\)
-starting from samples
-\(x_{t-1|t-1}^{(k)} \sim f(x_{t-1} \vert y_{1:t-1} ;\xi)\) at the
-previous time step. To do this, we need to obtain the derivative of the
-log of the density we want to estimate with respect to \(x_{t}\).
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-2-1.pdf}
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-2-2.pdf}
 
-\begin{align*}
-&\frac{d}{d x_t} \log\{f(x_{t} \vert y_{1:t}; \xi)\} = \frac{d}{d x_t} \log\left\{\frac{f(x_t \vert y_{1:t-1}) f(y_t \vert x_t, y_{1:t-1})}{f(y_t \vert y_{t:t-1})}\right\} \\
-&\qquad = \frac{d}{d x_t} \left[ \log\left\{f(x_t \vert y_{1:t-1})\right\} + \log \left\{f(y_t \vert x_t)\right\} - \log\left\{f(y_t \vert y_{t:t-1})\right\} \right] \\
-&\qquad = \frac{d}{d x_t} \log\left\{\int_{x_{t-1}}f(x_{t} \vert x_{t-1}, y_{1:t-1}; \xi)f(x_{t-1} \vert y_{1:t-1}; \xi) d x_{t-1} \right\} + \frac{d}{d x_t} \log \left\{ f(y_t \vert x_t) \right\} \\
-&\qquad = \frac{\frac{d}{d x_t} \int_{x_{t-1}}f(x_{t} \vert x_{t-1}; \xi)f(x_{t-1} \vert y_{1:t-1}; \xi) d x_{t-1}}{\int_{x_{t-1}}f(x_{t} \vert x_{t-1}; \xi)f(x_{t-1} \vert y_{1:t-1}; \xi) d x_{t-1}} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)} \\
-&\qquad \approx \frac{\frac{d}{d x_t} \sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)} \\
-&\qquad = \frac{\sum_{x_{t-1|t-1}^{(k)}} \frac{d}{d x_t} f(x_{t} \vert x_{t-1}; \xi)}{\sum_{x_{t-1|t-1}^{(k)}}f(x_{t} \vert x_{t-1}; \xi)} + \frac{\frac{d}{d x_t} f(y_t \vert x_t)}{f(y_t \vert x_t)}
-\end{align*}
+\begin{verbatim}
+## Warning: package 'cowplot' was built under R version 3.4.3
+\end{verbatim}
 
-\subsection{Simulation Studies}\label{simulation-studies}
+\begin{verbatim}
+## 
+## Attaching package: 'cowplot'
+\end{verbatim}
 
-We will do several simulation studies, divided into 2 groups:
+\begin{verbatim}
+## The following object is masked from 'package:ggplot2':
+## 
+##     ggsave
+\end{verbatim}
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  illustrating scenarios in which common particle filtering methods
-  struggle, but SSVGD has better chances
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-2-3.pdf}
 
-  \begin{enumerate}
-  \def\labelenumii{\alph{enumii}.}
-  \tightlist
-  \item
-    bad initalization
-  \item
-    normal-poisson filtering, seasonal model
-  \item
-    one other, more complex?
-  \end{enumerate}
-\item
-  demonstrating accuracy (compare to true states, exactly computed
-  filtered states, and likelihood)
+\subsection{Poisson Observation Model With Seasonal State-Space
+Dynamics}\label{poisson-observation-model-with-seasonal-state-space-dynamics}
 
-  \begin{enumerate}
-  \def\labelenumii{\alph{enumii}.}
-  \tightlist
-  \item
-    Kalman filter
-  \item
-    something nonlinear where we can do exact computations (brute force
-    for short time series??)?
-  \end{enumerate}
-\end{enumerate}
+In order to evaluate the performance on more involved dynamics we
+consider the following state-space model.
+\[\begin{pmatrix} X_{t,1} \\ X_{t,2} \end{pmatrix} = \begin{pmatrix} cos(2\pi/s) & sin(2\pi/s) \\ -sin(2\pi/s) & cos(2\pi/s) \end{pmatrix} \begin{pmatrix} X_{t-1,1} \\ X_{t-1,2} \end{pmatrix} \]
+\[Y_t \sim Pois(e^{X_{t,1}})\]
 
-\subsubsection{1. a. Bad Initialization}\label{a.-bad-initialization}
+\begin{verbatim}
+## Loading required package: rbiips
+\end{verbatim}
 
-\paragraph{Simulation Study Design}\label{simulation-study-design}
+\begin{verbatim}
+## Loading required package: coda
+\end{verbatim}
 
-Paragraph with data generating process, written with math.
+\begin{verbatim}
+## Loading required package: MASS
+\end{verbatim}
 
-Paragraph describing settings for simulation, e.g.~number of simulation
-runs, length of time series generated, etc.
+\begin{verbatim}
+## 
+## Attaching package: 'MASS'
+\end{verbatim}
 
-Paragraph describing different methods in comparison. 2 PF
-implementations, one non-linear KF implementation, and SSVGD
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     select
+\end{verbatim}
+
+\begin{verbatim}
+## ##
+## ## Markov Chain Monte Carlo Package (MCMCpack)
+\end{verbatim}
+
+\begin{verbatim}
+## ## Copyright (C) 2003-2018 Andrew D. Martin, Kevin M. Quinn, and Jong Hee Park
+\end{verbatim}
+
+\begin{verbatim}
+## ##
+## ## Support provided by the U.S. National Science Foundation
+\end{verbatim}
+
+\begin{verbatim}
+## ## (Grants SES-0350646 and SES-0350613)
+## ##
+\end{verbatim}
+
+\begin{verbatim}
+## * Parsing model in: /Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/seasonal_pois.bug
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in biips_model(seasonal_model_file, data = seasonal_data,
+## sample_data = FALSE): Unused variables in data: G, mean_sigma_init,
+## cov_sigma_init, mean_x_init
+\end{verbatim}
+
+\begin{verbatim}
+## * Compiling model graph
+##   Declaring variables
+##   Resolving undeclared variables
+##   Allocating nodes
+##   Graph size: 121
+\end{verbatim}
+
+\begin{verbatim}
+## * Assigning node samplers
+## * Running SMC forward sampler with 100000 particles
+##   |--------------------------------------------------| 100%
+##   |**************************************************| 11 iterations in 20.80 s
+\end{verbatim}
+
+\begin{verbatim}
+## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/seasonal.py  17, 18, 10, 16, 19, 11, 14, 20, 12, 13"
+\end{verbatim}
+
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-3-1.pdf}
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-3-2.pdf}
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-3-3.pdf}
+
+\subsection{Divergent Particle Filter}\label{divergent-particle-filter}
+
+We next investigate the ability of SSVGD to perform in the presence of
+poor initialization. This is a well known issue with current particle
+filter implemntations: starting far from a plausabile value of \(x_0\)
+forces all particles to receive weight \(0\) under the likelihood,
+leading to a degenerate filtering distribution. However, under SSVGD, we
+can simply increase the number of iterations, allowing for arbitrarily
+poor starting points.
+
+\begin{verbatim}
+## * Parsing model in: /Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/locally_level_1.bug
+## * Compiling model graph
+##   Declaring variables
+##   Resolving undeclared variables
+##   Allocating nodes
+##   Graph size: 18
+\end{verbatim}
+
+\begin{verbatim}
+## * Assigning node samplers
+## * Running SMC forward sampler with 10000 particles
+##   |--------------------------------------------------| 100%
+##   |**************************************************| 5 iterations in 0.24 s
+\end{verbatim}
+
+\begin{verbatim}
+## * Diagnosis of variable: x[1:5] 
+##   Filtering: POOR
+##     The minimum effective sample size is too low: 8.788576 
+##     Estimates may be poor for some variables.
+##     You should increase the number of particles
+## .  Smoothing: POOR
+##     The minimum effective sample size is too low: 3.664264 
+##     Estimates may be poor for some variables.
+##     You should increase the number of particles
+## .
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 0.0001262422 0.0115295532 0.0112004317 0.6160331587 1.2560522188
+\end{verbatim}
+
+\begin{verbatim}
+## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level.py  1, 4, 0, 3, 2"
+\end{verbatim}
+
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-4-1.pdf}
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-4-2.pdf}
+\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-4-3.pdf}
 
 \paragraph{Results}\label{results}
-
-Paragraph, referencing one figure and one table, summarizing results
-
-\subsubsection{1. b. Normal-Poisson seasonal
-model}\label{b.-normal-poisson-seasonal-model}
-
-\paragraph{Simulation Study Design}\label{simulation-study-design-1}
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g.~number of simulation
-runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison. 2 PF
-implementations, one non-linear KF implementation, and SSVGD
-
-\paragraph{Results}\label{results-1}
-
-Paragraph, referencing one figure and one table, summarizing results
-
-\subsubsection{1. c. One other, more
-complex?}\label{c.-one-other-more-complex}
-
-\paragraph{Simulation Study Design}\label{simulation-study-design-2}
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g.~number of simulation
-runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison. 2 PF
-implementations, one non-linear KF implementation, and SSVGD
-
-\paragraph{Results}\label{results-2}
-
-Paragraph, referencing one figure and one table, summarizing results
-
-\subsubsection{2. a. Kalman Filter}\label{a.-kalman-filter}
-
-\paragraph{Simulation Study Design}\label{simulation-study-design-3}
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g.~number of simulation
-runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison. 2 PF
-implementations, one non-linear KF implementation, and SSVGD
-
-\paragraph{Results}\label{results-3}
-
-Paragraph, referencing one figure and one table, summarizing results
-
-\subsubsection{2. b. something nonlinear where we can do exact
-computations (brute force for short time
-series??)?}\label{b.-something-nonlinear-where-we-can-do-exact-computations-brute-force-for-short-time-series}
-
-\paragraph{Simulation Study Design}\label{simulation-study-design-4}
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g.~number of simulation
-runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison. 2 PF
-implementations, one non-linear KF implementation, and SSVGD
-
-\paragraph{Results}\label{results-4}
 
 Paragraph, referencing one figure and one table, summarizing results
 

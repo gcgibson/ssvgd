@@ -13,6 +13,10 @@ header-includes:
    - \usepackage{amsmath}
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
 
 ```{r, include=FALSE}
 require(knitr)
@@ -115,7 +119,7 @@ $$X_t \sim N(X_{t-1},\sigma_1^2)$$
 $$Y_t \sim N(X_t, \sigma_2^2)$$
 
 
-```{r}
+```{r,echo=FALSE}
 library(dlm)
 
 data <- seq(1,10) + rnorm(10,0,1)
@@ -194,14 +198,14 @@ In order to evaluate the performance on more involved dynamics we consider the f
 $$\begin{pmatrix} X_{t,1} \\ X_{t,2} \end{pmatrix} = \begin{pmatrix} cos(2\pi/s) & sin(2\pi/s) \\ -sin(2\pi/s) & cos(2\pi/s) \end{pmatrix} \begin{pmatrix} X_{t-1,1} \\ X_{t-1,2} \end{pmatrix} $$
 $$Y_t \sim Pois(e^{X_{t,1}})$$
 
-```{r}
+```{r,echo = FALSE}
 require(rbiips)
 library(MCMCpack)
 library(ggplot2)
 
 ma_data <- round((sin(seq(10))**2)*10+10)
 
-seasonal_model_file = '/Users/gcgibson/Desktop/lyme/seasonal_pois.bug' # BUGS model filename
+seasonal_model_file = '/Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/seasonal_pois.bug' # BUGS model filename
 
 seasonal_t_max = length(ma_data)
 n_burn = 5000 # nb of burn-in/adaptation iterations
@@ -290,13 +294,13 @@ plot_grid(p, p1, labels = c("SVGD","PF"))
 ```
 
 ## Divergent Particle Filter
-We next investigate the ability of SSVGD to perform in the presence of poor initialization. This is a well known issue with the current particle filter implemntations: starting far from a plausabile value of $x_0$ forces all particles to receive weight $0$ under the likelihood. However, under SSVGD, we can simply increase the number of iterations, allowing for arbitrarily poor starting points.
+We next investigate the ability of SSVGD to perform in the presence of poor initialization. This is a well known issue with current particle filter implemntations: starting far from a plausabile value of $x_0$ forces all particles to receive weight $0$ under the likelihood, leading to a degenerate filtering distribution. However, under SSVGD, we can simply increase the number of iterations, allowing for arbitrarily poor starting points.
 
-```{r}
+```{r, echo=FALSE}
 library(ggplot2)
 require(rbiips)
 library(MCMCpack)
-locally_level_model_file = '/Users/gcgibson/Stein-Variational-Gradient-Descent/locally_level_1.bug' # BUGS model filename
+locally_level_model_file = '/Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/locally_level_1.bug' # BUGS model filename
 
 ma_data = c(1,4,0,3,2)
 t_max = length(ma_data)
@@ -382,83 +386,6 @@ plot_grid(p, p1, labels = c("SVGD","PF"))
 
 ```
 
-## Simulation Studies
-
-We will do several simulation studies, divided into 2 groups:
-
-1. illustrating scenarios in which common particle filtering methods struggle, but SSVGD has better chances
-    a. bad initalization
-    a. normal-poisson filtering, seasonal model
-    a. one other, more complex?
-1. demonstrating accuracy (compare to true states, exactly computed filtered states, and likelihood)
-    a. Kalman filter
-    a. something nonlinear where we can do exact computations (brute force for short time series??)?
-
-### 1. a. Bad Initialization
-
-#### Simulation Study Design
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
-
-#### Results
-
-Paragraph, referencing one figure and one table, summarizing results
-
-### 1. b. Normal-Poisson seasonal model
-
-#### Simulation Study Design
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
-
-#### Results
-
-Paragraph, referencing one figure and one table, summarizing results
-
-### 1. c. One other, more complex?
-
-#### Simulation Study Design
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
-
-#### Results
-
-Paragraph, referencing one figure and one table, summarizing results
-
-### 2. a. Kalman Filter
-
-#### Simulation Study Design
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
-
-#### Results
-
-Paragraph, referencing one figure and one table, summarizing results
-
-### 2. b. something nonlinear where we can do exact computations (brute force for short time series??)?
-
-#### Simulation Study Design
-
-Paragraph with data generating process, written with math.
-
-Paragraph describing settings for simulation, e.g. number of simulation runs, length of time series generated, etc.
-
-Paragraph describing different methods in comparison.  2 PF implementations, one non-linear KF implementation, and SSVGD
 
 #### Results
 
