@@ -29,6 +29,47 @@
             pdfborder={0 0 0},
             breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{{#1}}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{{#1}}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\ImportTok}[1]{{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{{#1}}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{{#1}}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{{#1}}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{{#1}}}}
+\newcommand{\BuiltInTok}[1]{{#1}}
+\newcommand{\ExtensionTok}[1]{{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{{#1}}}
+\newcommand{\RegionMarkerTok}[1]{{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{{#1}}}}
+\newcommand{\NormalTok}[1]{{#1}}
+\usepackage{longtable,booktabs}
 \usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -93,23 +134,22 @@ Estimation}
 
 \section{Introduction}\label{introduction}
 
-Particle filtering suffers from two main practical disadvantages. The
-first is particle depletion, where the number of effective particles
-with non-neglibile weight becomes too small. This has the effect of
-concentrating the mass around a small number of particles, leading to
-poor estimates of the target distribution. The second is the running
-time of the algorithm. A cursory analysis reveals that each particle is
-updated once per time step in the time series, and once per re-sampling
-step, to mitigate the issue above. If we imagine the order of particles
-is close to the length of the time series, we see that run-time is
-\(O(n^3)\).
-
-We propose another approach that we hope will do better than particle
-filtering in practice. In this approach, Stein Variational Gradient
-Descent (SVGD) is used to sequentially estimate the distribution of
-state variables in each time step, conditional on observed data up
-through that time. This method should overcome problems with particle
-depletion and excessive run-times for long time-series.
+State-Space models have become popular tools in the analysis of
+time-series. They allow for arbitrary transition and observation
+dynamics. The researcher can assign a latenet data generating process,
+while simultaneously allowing for observational error on that process.
+The classic algorithm for fitting non-Gaussian SSMs is given by the
+particle filter. Although many variations exist, we generally refer to
+the sampling importance resampling (SIR) filter when discussing particle
+filtering. Although a powerful inference tool, particle filtering
+suffers from several well known drawbacks. The first is the problem of
+filter degeneracy. This occurs when the obervations are far from the
+state predicted by the latent dynamics. The second is the excessive
+run-times on longer time series with complex dynamics. We propose an
+alternative approach that we hope will do better than particle filtering
+in practice. In this approach, Stein Variational Gradient Descent (SVGD)
+is used to sequentially estimate the distribution of state variables in
+each time step, conditional on observed data up through that time.
 
 \subsection{Overview of SVGD}\label{overview-of-svgd}
 
@@ -121,7 +161,9 @@ of this approximation is apparent in Bayesian statistics, where the
 usually intractable normalizing constant disappears in the gradient. The
 particles are subject to the following gradient ascent procedure.
 
-\[x_t^{(i)} \leftarrow x_{t-1}^{(i)} + \frac{1}{n}\sum_{j=1}^n[ k(x_j,x_{t-1}^{(i)})*\nabla log\ p(x_j) + \nabla k(x_j,,x_{t-1}^{(i)})]\]
+\[x_t^{(i)} \leftarrow x_{t-1}^{(i)} + \frac{1}{n}\sum_{j=1}^n[ k(x_j,x_{t-1}^{(i)})*\nabla log\ p(x_j) + \nabla k(x_j,x_{t-1}^{(i)})]\]
+
+for an arbitrary postivie definite kernel function \(k(.,.)\).
 
 \subsection{Sequential Stein Variational Gradient
 Descent}\label{sequential-stein-variational-gradient-descent}
@@ -134,7 +176,7 @@ transition density \(p(x_t | x_{t-1})\) Figure 1.
 \begin{figure}[htbp]
 \centering
 \includegraphics{/Users/gcgibson/Desktop/ssm.png}
-\caption{Caption for the picture.}
+\caption{State-Space Model Setup}
 \end{figure}
 
 We are interested in the filtering distribution
@@ -223,39 +265,10 @@ locally level Gaussian model. This model takes the form
 \[X_t \sim N(X_{t-1},\sigma_1^2)\] \[Y_t \sim N(X_t, \sigma_2^2)\]
 
 \begin{verbatim}
-## 
-## Attaching package: 'dlm'
-\end{verbatim}
-
-\begin{verbatim}
-## The following object is masked from 'package:ggplot2':
-## 
-##     %+%
-\end{verbatim}
-
-\begin{verbatim}
-## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py  0.285676619609561, 2.91753012580183, 2.78117622763953, 4.69683824157547, 5.74877016964816, 3.57537019527663, 7.39631203226068, 6.22488628594129, 7.82768183893382, 11.6222569023377"
+## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py  0.0121479182317193, 3.10227955247316, 2.78525589623649, 2.89882751350966, 4.00706421549309, 4.234252717322, 8.52496236751413, 7.73528903819178, 8.84377244815892, 9.77277837762714"
 \end{verbatim}
 
 \includegraphics{ssvgd_files/figure-latex/unnamed-chunk-2-1.pdf}
-\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-2-2.pdf}
-
-\begin{verbatim}
-## Warning: package 'cowplot' was built under R version 3.4.3
-\end{verbatim}
-
-\begin{verbatim}
-## 
-## Attaching package: 'cowplot'
-\end{verbatim}
-
-\begin{verbatim}
-## The following object is masked from 'package:ggplot2':
-## 
-##     ggsave
-\end{verbatim}
-
-\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-2-3.pdf}
 
 \subsection{Poisson Observation Model With Seasonal State-Space
 Dynamics}\label{poisson-observation-model-with-seasonal-state-space-dynamics}
@@ -264,48 +277,6 @@ In order to evaluate the performance on more involved dynamics we
 consider the following state-space model.
 \[\begin{pmatrix} X_{t,1} \\ X_{t,2} \end{pmatrix} = \begin{pmatrix} cos(2\pi/s) & sin(2\pi/s) \\ -sin(2\pi/s) & cos(2\pi/s) \end{pmatrix} \begin{pmatrix} X_{t-1,1} \\ X_{t-1,2} \end{pmatrix} \]
 \[Y_t \sim Pois(e^{X_{t,1}})\]
-
-\begin{verbatim}
-## Loading required package: rbiips
-\end{verbatim}
-
-\begin{verbatim}
-## Loading required package: coda
-\end{verbatim}
-
-\begin{verbatim}
-## Loading required package: MASS
-\end{verbatim}
-
-\begin{verbatim}
-## 
-## Attaching package: 'MASS'
-\end{verbatim}
-
-\begin{verbatim}
-## The following object is masked from 'package:dplyr':
-## 
-##     select
-\end{verbatim}
-
-\begin{verbatim}
-## ##
-## ## Markov Chain Monte Carlo Package (MCMCpack)
-\end{verbatim}
-
-\begin{verbatim}
-## ## Copyright (C) 2003-2018 Andrew D. Martin, Kevin M. Quinn, and Jong Hee Park
-\end{verbatim}
-
-\begin{verbatim}
-## ##
-## ## Support provided by the U.S. National Science Foundation
-\end{verbatim}
-
-\begin{verbatim}
-## ## (Grants SES-0350646 and SES-0350613)
-## ##
-\end{verbatim}
 
 \begin{verbatim}
 ## * Parsing model in: /Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/seasonal_pois.bug
@@ -329,7 +300,7 @@ consider the following state-space model.
 ## * Assigning node samplers
 ## * Running SMC forward sampler with 100000 particles
 ##   |--------------------------------------------------| 100%
-##   |**************************************************| 11 iterations in 20.80 s
+##   |**************************************************| 11 iterations in 20.78 s
 \end{verbatim}
 
 \begin{verbatim}
@@ -337,8 +308,6 @@ consider the following state-space model.
 \end{verbatim}
 
 \includegraphics{ssvgd_files/figure-latex/unnamed-chunk-3-1.pdf}
-\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-3-2.pdf}
-\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-3-3.pdf}
 
 \subsection{Divergent Particle Filter}\label{divergent-particle-filter}
 
@@ -348,7 +317,12 @@ filter implemntations: starting far from a plausabile value of \(x_0\)
 forces all particles to receive weight \(0\) under the likelihood,
 leading to a degenerate filtering distribution. However, under SSVGD, we
 can simply increase the number of iterations, allowing for arbitrarily
-poor starting points.
+poor starting points. Standard particle filtering algorithms use
+effective sample size as a measure of degeneracy. This is commonly
+defined as \[S^{pf}_{eff} = \frac{1}{\sum_i (w_t^i)^2}\]. The common
+rule of thumb is to not allow this quantity to drop below 50. The
+natural translation of this metric into particle filtering is compute
+the same metric based on the samples obtained by SSVGD.
 
 \begin{verbatim}
 ## * Parsing model in: /Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/locally_level_1.bug
@@ -361,26 +335,26 @@ poor starting points.
 
 \begin{verbatim}
 ## * Assigning node samplers
-## * Running SMC forward sampler with 10000 particles
+## * Running SMC forward sampler with 100 particles
 ##   |--------------------------------------------------| 100%
-##   |**************************************************| 5 iterations in 0.24 s
+##   |**************************************************| 5 iterations in 0.00 s
 \end{verbatim}
 
 \begin{verbatim}
 ## * Diagnosis of variable: x[1:5] 
 ##   Filtering: POOR
-##     The minimum effective sample size is too low: 8.788576 
+##     The minimum effective sample size is too low: 1.82146 
 ##     Estimates may be poor for some variables.
 ##     You should increase the number of particles
 ## .  Smoothing: POOR
-##     The minimum effective sample size is too low: 3.664264 
+##     The minimum effective sample size is too low: 1 
 ##     Estimates may be poor for some variables.
 ##     You should increase the number of particles
 ## .
 \end{verbatim}
 
 \begin{verbatim}
-## [1] 0.0001262422 0.0115295532 0.0112004317 0.6160331587 1.2560522188
+## [1] 0.0001431633 0.0032389841 0.0036750256 0.0633277320 0.3430663214
 \end{verbatim}
 
 \begin{verbatim}
@@ -388,19 +362,99 @@ poor starting points.
 \end{verbatim}
 
 \includegraphics{ssvgd_files/figure-latex/unnamed-chunk-4-1.pdf}
-\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-4-2.pdf}
-\includegraphics{ssvgd_files/figure-latex/unnamed-chunk-4-3.pdf}
+
+\begin{verbatim}
+## [1] 1.2455414 0.2450772 9.0004783 0.3402830 0.5344517
+\end{verbatim}
+
+\subsubsection{Diagnostics}\label{diagnostics}
+
+Standard particle filtering algorithms use effective sample size as a
+measure of degeneracy. This is commonly defined as
+\[S_{eff} = \frac{1}{\sum_i (w_i)^2}\]. The common rule of thumb is to
+not allow this quantity to fall below 50. Indeed, software
+implementations such as Biips throws an error if the number of effective
+particles falls below 50. We compute the effective sample size in an
+analogous way to the particle filter, where \(w_i\) is defined as in the
+SIR particle filter.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(knitr)}
+
+\NormalTok{ess_df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{seq}\NormalTok{(}\DecValTok{1}\NormalTok{:}\DecValTok{5}\NormalTok{),effect_size,out_smc$x$f$ess)}
+\KeywordTok{colnames}\NormalTok{(ess_df) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"t"}\NormalTok{,}\StringTok{"SSVGD ESS"}\NormalTok{, }\StringTok{"PF ESS"}\NormalTok{)}
+\KeywordTok{kable}\NormalTok{(ess_df,}\DataTypeTok{caption=}\StringTok{"Effective Sample size"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rrr@{}}
+\caption{Effective Sample size}\tabularnewline
+\toprule
+t & SSVGD ESS & PF ESS\tabularnewline
+\midrule
+\endfirsthead
+\toprule
+t & SSVGD ESS & PF ESS\tabularnewline
+\midrule
+\endhead
+1 & 8.660931 & 33.465772\tabularnewline
+2 & 9.735688 & 1.821460\tabularnewline
+3 & 11.876790 & 99.996175\tabularnewline
+4 & 10.229694 & 4.717344\tabularnewline
+5 & 12.842775 & 10.914045\tabularnewline
+\bottomrule
+\end{longtable}
 
 \paragraph{Results}\label{results}
 
-Paragraph, referencing one figure and one table, summarizing results
+In order to assess the accuracy of SSVGD we consider multiple different
+evaluation metrics. We evaluate the forecasts on both mean-square-error
+and log-score. Log-scores were computed as follows,
 
-\subsection{Application}\label{application}
+\[p(y_{1:n}) = \int_{x_{1:n}} p(y_{1:n} | x_{1:n}) p(x_{1:n}) d_{x_{1:n}}\]
 
-Example model with real data. fairly real model, but not thaaaaaat
-complex.
+This can be approximated as
+
+\[\frac{1}{k}\sum_{i=1}^k p(y_{1:n} | x^{(i)}_{1:n})\] That is, we take
+a full trajectory \(x_{1:n}\) and compute the log-probability of
+\(y_{1:n}\). Note that this is equivalent to taking the average weight
+at each step.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{log_p <-}\StringTok{ }\KeywordTok{c}\NormalTok{()}
+\NormalTok{for (i in }\DecValTok{1}\NormalTok{:}\KeywordTok{nrow}\NormalTok{(weights))\{}
+  \NormalTok{log_p <-}\StringTok{ }\KeywordTok{c}\NormalTok{(log_p,}\KeywordTok{mean}\NormalTok{(weights[i,]))}
+\NormalTok{\}}
+
+
+
+\NormalTok{ll_df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{sum}\NormalTok{(log_p),out_smc$log_marg_like)}
+\KeywordTok{colnames}\NormalTok{(ll_df) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"SSVGD"}\NormalTok{,}\StringTok{"PF"}\NormalTok{)}
+\KeywordTok{kable}\NormalTok{(ll_df,}\DataTypeTok{caption=}\StringTok{"Log Score"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rr@{}}
+\caption{Log Score}\tabularnewline
+\toprule
+SSVGD & PF\tabularnewline
+\midrule
+\endfirsthead
+\toprule
+SSVGD & PF\tabularnewline
+\midrule
+\endhead
+-7.373609 & -56.57699\tabularnewline
+\bottomrule
+\end{longtable}
 
 \subsection{Discussion}\label{discussion}
+
+SSVGD seems to perform well in terms of effective sample size and log
+score when compared to traditional sequential monte carlo particle
+filtering.
 
 \subsection{Bibliography}\label{bibliography}
 

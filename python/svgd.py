@@ -39,7 +39,7 @@ class SVGD():
             if debug and (iter+1) % 1000 == 0:
                 #print 'iter ' + str(iter+1) 
                 pass
-            lnpgrad = dlnprob(theta,theta_t_minus_1,time_series,t)
+            lnpgrad = dlnprob(theta,theta_t_minus_1,time_series,t, iter)
             # calculating the kernel matrix
            # h = 0
            

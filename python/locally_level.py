@@ -22,11 +22,15 @@ seasonality = 4
 
 G = np.matrix([[np.cos(2*np.pi/seasonality),np.sin(2*np.pi/seasonality)],[-np.sin(2*np.pi/seasonality),np.cos(2*np.pi/seasonality)]])
 
-class StateSpaceModel:
+class StateSpaceModel():
+    def __init__(self):
+      self.weights =[ ]
 
-    def lnprob_theta_i(self, theta_i, theta_t_minus_1, time_series,t):
+    def lnprob_theta_i(self, theta_i, theta_t_minus_1, time_series,t,iter_):
         #ln poisson observations
             lnprob_theta_i = -np.exp(theta_i) + time_series[t]*theta_i - np.sum(np.log(np.arange(time_series[t])+1))
+            if iter_ == 999:
+                self.weights.append(lnprob_theta_i._value[0])
             transition_sum = 0
             for theta_t_minus_1_i in theta_t_minus_1:
 
@@ -34,14 +38,14 @@ class StateSpaceModel:
                 
             return (lnprob_theta_i+np.log(transition_sum))
     
-    def dlnprob(self, theta_i,theta_t_minus_1,time_series, t):
-        return (grad(self.lnprob_theta_i)(theta_i, theta_t_minus_1, time_series,t))
+    def dlnprob(self, theta_i,theta_t_minus_1,time_series, t, iter_):
+        return (grad(self.lnprob_theta_i)(theta_i, theta_t_minus_1, time_series,t , iter_))
     
-    def grad_overall(self, theta,theta_t_minus_1,time_series, t):
+    def grad_overall(self, theta,theta_t_minus_1,time_series, t, iter_):
         return_matrix = []
 
         for theta_i in theta:
-            return_matrix.append(self.dlnprob(theta_i,theta_t_minus_1 ,time_series,t))
+            return_matrix.append(self.dlnprob(theta_i,theta_t_minus_1 ,time_series,t, iter_))
     
         return np.array(return_matrix)
     
@@ -51,7 +55,7 @@ if __name__ == '__main__':
     total_thetas = []
     n_iter = 1000
 
-    time_series = []#np.round(np.power(np.sin(np.arange(10)+1),2)*10 + 10)
+    time_series = []#np.round(np.power(np.sin(np.arange(2)+1),2)*10 + 10)
     input_exists = True
     i = 1
     while input_exists:
@@ -63,10 +67,10 @@ if __name__ == '__main__':
 
 
     model = StateSpaceModel()
-    num_particles = 10
+    num_particles = 100
     x0 = np.random.normal(-10,1,[num_particles,1]).astype(float)
-    
-    theta = SVGD().update(x0,0,x0,time_series, model.grad_overall, n_iter=n_iter, stepsize=0.01)
+    weights = []
+    theta = SVGD().update(x0,0,x0,time_series, model.grad_overall,n_iter=n_iter, stepsize=0.01)
     total_thetas.append(theta)
     #theta = p(x_0|y_0)
 
@@ -80,8 +84,10 @@ if __name__ == '__main__':
       total_thetas.append(theta)
       filtered_means.append(np.mean(theta,axis=0)[0])
       filtered_covs.append(np.var(theta,axis=0)[0])
-    
-    return_list = filtered_means + filtered_covs
-    myList = ','.join(map(str,np.array(total_thetas).flatten() ))
+    #print (model.weights)
+    return_list = filtered_means + filtered_covs + model.weights
+    total_thetas = np.array(total_thetas).flatten()
+    total_thetas = np.append(total_thetas,np.array(model.weights).flatten())
+    myList = ','.join(map(str,total_thetas))
     print (myList)
    

@@ -11,6 +11,7 @@ header-includes:
    - \usepackage{multicol}
    - \usepackage{amssymb}
    - \usepackage{amsmath}
+bibliography: library.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -33,26 +34,31 @@ opts_chunk$set(
 
 # Introduction
 
-Particle filtering suffers from two main practical disadvantages. The first is particle depletion, where the number of effective particles with non-neglibile weight becomes too small. This has the effect of concentrating the mass around a small number of particles, leading to poor estimates of the target distribution. The second is the running time of the algorithm. A cursory analysis reveals that each particle is updated once per time step in the time series, and once per re-sampling step, to mitigate the issue above. If we imagine the order of particles is close to the length of the time series, we see that run-time is $O(n^3)$.
-
-We propose another approach that we hope will do better than particle filtering in practice.  In this approach, Stein Variational Gradient Descent (SVGD) is used to sequentially estimate the distribution of state variables in each time step, conditional on observed data up through that time.  This method should overcome problems with particle depletion and excessive run-times for long time-series.
+State-Space models have become popular tools in the analysis of time-series. They allow for arbitrary transition and observation dynamics. The researcher can assign a latent data generating process, while simultaneously allowing for observational error on that process. The classic algorithm for fitting non-Gaussian SSMs is given by the particle filter. Although many variations exist, we generally refer to the sampling importance re-sampling (SIR) filter when discussing particle filtering. Although a powerful inference tool, particle filtering suffers from several well known drawbacks. The first is the problem of filter degeneracy. This occurs when the observations are far from the state predicted by the latent dynamics. The second is the excessive run-times on longer time series with complex dynamics. 
+We propose an alternative approach that we hope will do better than particle filtering in practice.  In this approach, Stein Variational Gradient Descent (SVGD) is used to sequentially estimate the distribution of state variables in each time step, conditional on observed data up through that time.  
 
 ## Overview of SVGD
-Stein Variational Gradient Descent can be used to estimate a continuous distribution by a set of samples. By iteratively transporting samples from an initial distribution in the direction of the likelihood, we are able to generate a sample from the target distribution. The usefullness of this approximation is apparent in Bayesian statistics, where the usually intractable normalizing constant disappears in the gradient. The particles are subject to the following gradient ascent procedure. 
+Stein Variational Gradient Descent can be used to estimate a continuous distribution by a set of particles. By iteratively transporting samples from an initial distribution in the direction of the likelihood, we are able to generate compute Monte Carlo estimates of the posterior. The usefulness of this approximation is apparent in Bayesian statistics, where the usually intractable normalizing constant disappears in the particle update step. The particles are subject to the following gradient ascent procedure. 
 
-$$x_t^{(i)} \leftarrow x_{t-1}^{(i)} + \frac{1}{n}\sum_{j=1}^n[ k(x_j,x_{t-1}^{(i)})*\nabla log\ p(x_j) + \nabla k(x_j,,x_{t-1}^{(i)})]$$
+$$x_i^{l+i} \leftarrow x_i^{l}+\epsilon_l\hat{\phi^*(x_i^l)}   $$
+$$\hat{\phi^*(x)} = \frac{1}{n}\sum_{j=1}^n[k(x_j^l,x)\nabla_{x_j^l}log\ p(x_j^l) + \nabla_{x_j^l}k(x_j^l,x)]$$
 
 
 
-## Sequential Stein Variational Gradient Descent 
+for an arbitrary positive definite kernel function $k(.,.)$ usually chosen to be a Gaussian kernel.
+
+
+## State Space Models
 Suppose we are given a time series $Y_1,Y_2,...,Y_t$ for $Y \in \mathbb{R}$. We model the sequence as a state-space model parameterized by an observation density $p(y_t | x_t)$ and a transition density $p(x_t | x_{t-1})$ Figure 1.
 
-![Caption for the picture.](/Users/gcgibson/Desktop/ssm.png)
+![State-Space Model Setup](/Users/gcgibson/Desktop/ssm.png)
+
+
 
 
 We are interested in the filtering distribution $p(x_1,...,x_n | y_1,...,y_n)$ which by Bayes formula is $$p(x_1,...,x_n | y_1,...,y_n) = \frac{p(y_1,...,y_n | x_1,...,x_n) p(x_1,...,x_n)}{Z}$$.
 
-Because computing the normalizing constant $Z$ is intractable for many choices of $p(y_t | x_t)$ and $p(x_t | x_{t-1})$, we must resort to monte carlo algorithms. The classic approach that incorporates the sequential nature of the data is given by the particle filtering algorithm. Particle filtering approximates the filtering density using sequential importance sampling. We instead focus on the following recursion. 
+Because computing the normalizing constant $Z$ is intractable for many choices of $p(y_t | x_t)$ and $p(x_t | x_{t-1})$, we must resort to Monte Carlo algorithms. The classic approach that incorporates the sequential nature of the data is given by the particle filtering algorithm. Particle filtering approximates the filtering density using sequential importance sampling. We instead focus on the following recursion. 
 
 $$p(x_t | y_{1:t}) = \int p(x_{0:t} | y_{1:t})d_{x_0:t-1}$$
 $$=\frac{p(y_t | x_t)}{\int p(y_t|x_t)p(x_t | y_{1:t-1})dx_t}p(x_t | y_{1:t-1})$$
@@ -176,7 +182,7 @@ p1<- p1+ geom_line(data = data.frame(x=seq(1,length(filter_results)),y=filter_re
   geom_ribbon(data=data.frame(x=seq(1,length(data)),y=filter_results),aes(x=x,ymin=filter_results-1.96*sqrt(v),ymax=filter_results+1.96*sqrt(v)),alpha=0.3)+
   xlab('data_date') +
   ylab('count') #+ ylim(low=-2,high=10) 
-print(p1)
+#print(p1)
 
 
 p<- ggplot() 
@@ -186,7 +192,7 @@ p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=meanSsv
   geom_ribbon(data=data.frame(x=seq(1,length(data)),y=meanSsvgdForecasts),aes(x=x,ymin=lowPiSsvgdForecasts,ymax=highPiSsvgdForecasts,alpha=0.3))+
   xlab('data_date') +
   ylab('count')# +ylim(low=-10,high=100) 
-print(p)
+#print(p)
 
 library(cowplot)
 plot_grid(p, p1, labels = c("SVGD","PF"))
@@ -274,7 +280,7 @@ p1<- p1+ geom_line(data = data.frame(x=seq(1,length(seasonal_model_summary$x1$f$
   geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=exp(seasonal_model_summary$x1$f$mean)),aes(x=x,ymin=exp(lowPf),ymax=exp(highPf)),alpha=0.3)+
   xlab('data_date') +
   ylab('count') + ylim(low=-10,high=110) 
-print(p1)
+#print(p1)
 
 
 
@@ -286,7 +292,7 @@ p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=exp(mea
   geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=exp(meanSsvgdForecasts)),aes(x=x,ymin=exp(lowPiSsvgdForecasts),ymax=exp(highPiSsvgdForecasts),alpha=0.3))+
   xlab('data_date') +
   ylab('count') +ylim(low=-10,high=110) 
-print(p)
+#print(p)
 
 library(cowplot)
 plot_grid(p, p1, labels = c("SVGD","PF"))
@@ -294,7 +300,9 @@ plot_grid(p, p1, labels = c("SVGD","PF"))
 ```
 
 ## Divergent Particle Filter
-We next investigate the ability of SSVGD to perform in the presence of poor initialization. This is a well known issue with current particle filter implemntations: starting far from a plausabile value of $x_0$ forces all particles to receive weight $0$ under the likelihood, leading to a degenerate filtering distribution. However, under SSVGD, we can simply increase the number of iterations, allowing for arbitrarily poor starting points.
+
+We next investigate the ability of SSVGD to perform in the presence of poor initialization. This is a well known issue with current particle filter implementations: starting far from a plausible value of $x_0$ forces all particles to receive weight $0$ under the likelihood, leading to a degenerate filtering distribution. However, under SSVGD, we can simply increase the number of iterations, allowing for arbitrarily poor starting points. Standard particle filtering algorithms use effective sample size as a measure of degeneracy. This is commonly defined as $$S^{pf}_{eff} = \frac{1}{\sum_i (w_t^i)^2}$$. The common rule of thumb is to not allow this quantity to drop below 50. The natural translation of this metric into particle filtering is compute the same metric based on the samples obtained by SSVGD. 
+
 
 ```{r, echo=FALSE}
 library(ggplot2)
@@ -309,7 +317,7 @@ t_max = length(ma_data)
 #setting the mean value of the initial count to 1400
 locally_level_data = list(t_max=t_max, y = ma_data,  mean_x_init=-10)
 locally_level_model = biips_model(locally_level_model_file, data=locally_level_data,sample_data = FALSE)
-n_part = 10000 # Number of particles
+n_part = 100 # Number of particles
 variables = c('x') # Variables to be monitored
 mn_type = 'fs'; rs_type = 'stratified'; rs_thres = 0.5 # Optional parameters
 
@@ -328,28 +336,35 @@ exec_str <- paste(exec_str, toString(ma_data))
 print (exec_str)
 ssvgdForecasts <- system(exec_str,intern=TRUE,wait = TRUE)
 
-#ssvgdForecasts <- strsplit(ssvgdForecasts,",")
-#ssvgdForecasts <- as.numeric(unlist(ssvgdForecasts))
-#ssvgdForecasts
+
+npart <- 100
+
 count <- 1
 ssvgdForecasts <- strsplit(ssvgdForecasts[1],",")
 ssvgdForecasts <- unlist(ssvgdForecasts)
 first_state_forecasts <- c()
+weights <- c()
 
-for (i in seq(1,length(ssvgdForecasts)) ){
+for (i in seq(1,round(length(ssvgdForecasts)/2)) ){
   first_state_forecasts <- c(first_state_forecasts,as.numeric(ssvgdForecasts[i]))
 }
 
+for (i in seq(round(length(ssvgdForecasts)/2)+1,length(ssvgdForecasts)) ){
+  weights <- c(weights,as.numeric(ssvgdForecasts[i]))
+}
 
-aggregate_forecast <- matrix(first_state_forecasts,nrow=5,ncol=10,byrow = TRUE)
 
+aggregate_forecast <- matrix(first_state_forecasts,nrow=length(ma_data),ncol=npart,byrow = TRUE)
+weights <- matrix(weights,nrow=length(ma_data),ncol=npart,byrow=TRUE)
 
 meanSsvgdForecasts <-c()
 lowPiSsvgdForecasts <- c()
 highPiSsvgdForecasts <- c()
+varSsvgdForecasts <- c()
 
 for (i in 1:nrow(aggregate_forecast)){
   meanSsvgdForecasts <- c(meanSsvgdForecasts,mean(aggregate_forecast[i,]))
+  varSsvgdForecasts <- c(varSsvgdForecasts,var(aggregate_forecast[i,]))
   srted <- sort(aggregate_forecast[i,])
   lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[2])
   highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[9])
@@ -367,7 +382,7 @@ p1<- p1+ geom_line(data = data.frame(x=seq(1,length(summ_smc$x$f$mean)),y=exp(su
   geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=exp(summ_smc$x$f$mean)),aes(x=x,ymin=exp(lowPf),ymax=exp(highPf)),alpha=0.3)+
   xlab('data_date') +
   ylab('count') + ylim(low=-10,high=10) 
-print(p1)
+#print(p1)
 
 
 
@@ -379,24 +394,68 @@ p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=exp(mea
   geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=exp(meanSsvgdForecasts)),aes(x=x,ymin=exp(lowPiSsvgdForecasts),ymax=exp(highPiSsvgdForecasts),alpha=0.3))+
   xlab('data_date') +
   ylab('count') +ylim(low=-10,high=10) 
-print(p)
+#print(p)
 
 library(cowplot)
 plot_grid(p, p1, labels = c("SVGD","PF"))
 
+print (varSsvgdForecasts)
+weights <- matrix(weights,nrow=length(ma_data),ncol=npart,byrow=TRUE)
+
+effect_size <- c()
+for (w in 1:nrow(weights)){
+  tmp <- exp(weights[w,])
+  tmp <- tmp/sum(tmp)
+  
+  effect_size <- c(effect_size, 1/sum(tmp**2))
+}
+
 ```
 
 
+### Diagnostics
+
+Standard particle filtering algorithms use effective sample size as a measure of degeneracy. This is commonly defined as $$S_{eff} = \frac{1}{\sum_i (w_i)^2}$$. The common rule of thumb is to not allow this quantity to fall below 50. Indeed, software implementations such as Biips throws an error if the number of effective particles falls below 50. We compute the effective sample size in an analogous way to the particle filter, where $w_i$ is defined as in the SIR particle filter. 
+
+
+```{r}
+library(knitr)
+
+ess_df <- data.frame(seq(1:5),effect_size,out_smc$x$f$ess)
+colnames(ess_df) <- c("t","SSVGD ESS", "PF ESS")
+kable(ess_df,caption="Effective Sample size")
+
+```
+
 #### Results
+In order to assess the accuracy of SSVGD we consider multiple different evaluation metrics. We evaluate the forecasts on both mean-square-error and log-score. Log-scores were computed as follows,
 
-Paragraph, referencing one figure and one table, summarizing results
+$$p(y_{1:n}) = \int_{x_{1:n}} p(y_{1:n} | x_{1:n}) p(x_{1:n}) d_{x_{1:n}}$$
 
-## Application
+This can be approximated as 
 
-Example model with real data.  fairly real model, but not thaaaaaat complex.
+$$\frac{1}{k}\sum_{i=1}^k p(y_{1:n} | x^{(i)}_{1:n})$$
+That is, we take a full trajectory $x_{1:n}$ and compute the log-probability of $y_{1:n}$. Note that this is equivalent to taking the average weight at each step. 
+
+```{r}
+log_p <- c()
+for (i in 1:nrow(weights)){
+  log_p <- c(log_p,mean(weights[i,]))
+}
+
+
+
+ll_df <- data.frame(sum(log_p),out_smc$log_marg_like)
+colnames(ll_df) <- c("SSVGD","PF")
+kable(ll_df,caption="Log Score")
+
+```
+
 
 ## Discussion
+Sequential Stein Variational Gradient Descent offers a useful alternative to traditional particle filtering. We are able to increase the effective sample size using the same number of particles. We are also able to approximate the true likelihood of the Kalman Filter with a small number of particles. Further work is required to understand the impact of the bandwith heuristic on the resulting predictive intervals. 
 
 
 ## Bibliography 
+
 
