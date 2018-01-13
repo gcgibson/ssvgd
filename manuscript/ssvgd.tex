@@ -136,37 +136,40 @@ Estimation}
 
 State-Space models have become popular tools in the analysis of
 time-series. They allow for arbitrary transition and observation
-dynamics. The researcher can assign a latenet data generating process,
+dynamics. The researcher can assign a latent data generating process,
 while simultaneously allowing for observational error on that process.
 The classic algorithm for fitting non-Gaussian SSMs is given by the
 particle filter. Although many variations exist, we generally refer to
-the sampling importance resampling (SIR) filter when discussing particle
-filtering. Although a powerful inference tool, particle filtering
-suffers from several well known drawbacks. The first is the problem of
-filter degeneracy. This occurs when the obervations are far from the
-state predicted by the latent dynamics. The second is the excessive
-run-times on longer time series with complex dynamics. We propose an
-alternative approach that we hope will do better than particle filtering
-in practice. In this approach, Stein Variational Gradient Descent (SVGD)
-is used to sequentially estimate the distribution of state variables in
-each time step, conditional on observed data up through that time.
+the sampling importance re-sampling (SIR) filter when discussing
+particle filtering. Although a powerful inference tool, particle
+filtering suffers from several well known drawbacks. The first is the
+problem of filter degeneracy. This occurs when the observations are far
+from the state predicted by the latent dynamics. The second is the
+excessive run-times on longer time series with complex dynamics. We
+propose an alternative approach that we hope will do better than
+particle filtering in practice. In this approach, Stein Variational
+Gradient Descent (SVGD) is used to sequentially estimate the
+distribution of state variables in each time step, conditional on
+observed data up through that time.
 
 \subsection{Overview of SVGD}\label{overview-of-svgd}
 
 Stein Variational Gradient Descent can be used to estimate a continuous
-distribution by a set of samples. By iteratively transporting samples
+distribution by a set of particles. By iteratively transporting samples
 from an initial distribution in the direction of the likelihood, we are
-able to generate a sample from the target distribution. The usefullness
-of this approximation is apparent in Bayesian statistics, where the
-usually intractable normalizing constant disappears in the gradient. The
-particles are subject to the following gradient ascent procedure.
+able to generate compute Monte Carlo estimates of the posterior. The
+usefulness of this approximation is apparent in Bayesian statistics,
+where the usually intractable normalizing constant disappears in the
+particle update step. The particles are subject to the following
+gradient ascent procedure.
 
-\[x_t^{(i)} \leftarrow x_{t-1}^{(i)} + \frac{1}{n}\sum_{j=1}^n[ k(x_j,x_{t-1}^{(i)})*\nabla log\ p(x_j) + \nabla k(x_j,x_{t-1}^{(i)})]\]
+\[x_i^{l+i} \leftarrow x_i^{l}+\epsilon_l\hat{\phi^*(x_i^l)}   \]
+\[\hat{\phi^*(x)} = \frac{1}{n}\sum_{j=1}^n[k(x_j^l,x)\nabla_{x_j^l}log\ p(x_j^l) + \nabla_{x_j^l}k(x_j^l,x)]\]
 
-for an arbitrary postivie definite kernel function \(k(.,.)\).
+for an arbitrary positive definite kernel function \(k(.,.)\) usually
+chosen to be a Gaussian kernel.
 
-\subsection{Sequential Stein Variational Gradient
-Descent}\label{sequential-stein-variational-gradient-descent}
+\subsection{State Space Models}\label{state-space-models}
 
 Suppose we are given a time series \(Y_1,Y_2,...,Y_t\) for
 \(Y \in \mathbb{R}\). We model the sequence as a state-space model
@@ -175,7 +178,7 @@ transition density \(p(x_t | x_{t-1})\) Figure 1.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics{/Users/gcgibson/Desktop/ssm.png}
+\includegraphics{/home/gcgibson/ssm.png}
 \caption{State-Space Model Setup}
 \end{figure}
 
@@ -185,7 +188,7 @@ We are interested in the filtering distribution
 
 Because computing the normalizing constant \(Z\) is intractable for many
 choices of \(p(y_t | x_t)\) and \(p(x_t | x_{t-1})\), we must resort to
-monte carlo algorithms. The classic approach that incorporates the
+Monte Carlo algorithms. The classic approach that incorporates the
 sequential nature of the data is given by the particle filtering
 algorithm. Particle filtering approximates the filtering density using
 sequential importance sampling. We instead focus on the following
@@ -265,7 +268,39 @@ locally level Gaussian model. This model takes the form
 \[X_t \sim N(X_{t-1},\sigma_1^2)\] \[Y_t \sim N(X_t, \sigma_2^2)\]
 
 \begin{verbatim}
-## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level_gaussian.py  0.0121479182317193, 3.10227955247316, 2.78525589623649, 2.89882751350966, 4.00706421549309, 4.234252717322, 8.52496236751413, 7.73528903819178, 8.84377244815892, 9.77277837762714"
+## 
+## Attaching package: 'dlm'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:ggplot2':
+## 
+##     %+%
+\end{verbatim}
+
+\begin{verbatim}
+## [1] "python /home/gcgibson/ssvgd/python/locally_level_gaussian.py  -0.257101984753462, 2.93940091932628, 3.68291727949432, 3.32100137324252, 4.15956348689299, 6.97055664752203, 7.28233172038884, 6.53997875913781, 7.9280379199457, 10.4000421863735"
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'cowplot'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:ggplot2':
+## 
+##     ggsave
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 1 rows containing missing values (geom_path).
+
+## Warning: Removed 1 rows containing missing values (geom_path).
+
+## Warning: Removed 1 rows containing missing values (geom_path).
+
+## Warning: Removed 1 rows containing missing values (geom_path).
 \end{verbatim}
 
 \includegraphics{ssvgd_files/figure-latex/unnamed-chunk-2-1.pdf}
@@ -279,7 +314,49 @@ consider the following state-space model.
 \[Y_t \sim Pois(e^{X_{t,1}})\]
 
 \begin{verbatim}
-## * Parsing model in: /Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/seasonal_pois.bug
+## Loading required package: rbiips
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: coda
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: MASS
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'MASS'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     select
+\end{verbatim}
+
+\begin{verbatim}
+## ##
+## ## Markov Chain Monte Carlo Package (MCMCpack)
+\end{verbatim}
+
+\begin{verbatim}
+## ## Copyright (C) 2003-2018 Andrew D. Martin, Kevin M. Quinn, and Jong Hee Park
+\end{verbatim}
+
+\begin{verbatim}
+## ##
+## ## Support provided by the U.S. National Science Foundation
+\end{verbatim}
+
+\begin{verbatim}
+## ## (Grants SES-0350646 and SES-0350613)
+## ##
+\end{verbatim}
+
+\begin{verbatim}
+## * Parsing model in: /home/gcgibson/ssvgd/bug_files/seasonal_pois.bug
 \end{verbatim}
 
 \begin{verbatim}
@@ -300,11 +377,11 @@ consider the following state-space model.
 ## * Assigning node samplers
 ## * Running SMC forward sampler with 100000 particles
 ##   |--------------------------------------------------| 100%
-##   |**************************************************| 11 iterations in 20.78 s
+##   |**************************************************| 11 iterations in 9.29 s
 \end{verbatim}
 
 \begin{verbatim}
-## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/seasonal.py  17, 18, 10, 16, 19, 11, 14, 20, 12, 13"
+## [1] "python /home/gcgibson/ssvgd/python/seasonal.py  17, 18, 10, 16, 19, 11, 14, 20, 12, 13"
 \end{verbatim}
 
 \includegraphics{ssvgd_files/figure-latex/unnamed-chunk-3-1.pdf}
@@ -313,7 +390,7 @@ consider the following state-space model.
 
 We next investigate the ability of SSVGD to perform in the presence of
 poor initialization. This is a well known issue with current particle
-filter implemntations: starting far from a plausabile value of \(x_0\)
+filter implementations: starting far from a plausible value of \(x_0\)
 forces all particles to receive weight \(0\) under the likelihood,
 leading to a degenerate filtering distribution. However, under SSVGD, we
 can simply increase the number of iterations, allowing for arbitrarily
@@ -325,12 +402,12 @@ natural translation of this metric into particle filtering is compute
 the same metric based on the samples obtained by SSVGD.
 
 \begin{verbatim}
-## * Parsing model in: /Users/gcgibson/Stein-Variational-Gradient-Descent/bug_files/locally_level_1.bug
+## * Parsing model in: /home/gcgibson/ssvgd/bug_files/locally_level_1.bug
 ## * Compiling model graph
 ##   Declaring variables
 ##   Resolving undeclared variables
 ##   Allocating nodes
-##   Graph size: 18
+##   Graph size: 14
 \end{verbatim}
 
 \begin{verbatim}
@@ -343,28 +420,28 @@ the same metric based on the samples obtained by SSVGD.
 \begin{verbatim}
 ## * Diagnosis of variable: x[1:5] 
 ##   Filtering: POOR
-##     The minimum effective sample size is too low: 1.82146 
+##     The minimum effective sample size is too low: 8.152 
 ##     Estimates may be poor for some variables.
 ##     You should increase the number of particles
 ## .  Smoothing: POOR
-##     The minimum effective sample size is too low: 1 
+##     The minimum effective sample size is too low: 4.629 
 ##     Estimates may be poor for some variables.
 ##     You should increase the number of particles
 ## .
 \end{verbatim}
 
 \begin{verbatim}
-## [1] 0.0001431633 0.0032389841 0.0036750256 0.0633277320 0.3430663214
+## [1] -0.4692  1.0525  0.7421  1.3743  1.5461
 \end{verbatim}
 
 \begin{verbatim}
-## [1] "python /Users/gcgibson/Stein-Variational-Gradient-Descent/python/locally_level.py  1, 4, 0, 3, 2"
+## [1] "python /home/gcgibson/ssvgd/python/llg.py  1, 4, 0, 3, 2"
 \end{verbatim}
 
 \includegraphics{ssvgd_files/figure-latex/unnamed-chunk-4-1.pdf}
 
 \begin{verbatim}
-## [1] 1.2455414 0.2450772 9.0004783 0.3402830 0.5344517
+## NULL
 \end{verbatim}
 
 \subsubsection{Diagnostics}\label{diagnostics}
@@ -398,11 +475,11 @@ t & SSVGD ESS & PF ESS\tabularnewline
 t & SSVGD ESS & PF ESS\tabularnewline
 \midrule
 \endhead
-1 & 8.660931 & 33.465772\tabularnewline
-2 & 9.735688 & 1.821460\tabularnewline
-3 & 11.876790 & 99.996175\tabularnewline
-4 & 10.229694 & 4.717344\tabularnewline
-5 & 12.842775 & 10.914045\tabularnewline
+1 & 3.4573 & 100.000\tabularnewline
+2 & 0.2284 & 8.152\tabularnewline
+3 & 23.1824 & 86.440\tabularnewline
+4 & 1.2917 & 76.115\tabularnewline
+5 & 2.2782 & 62.245\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -446,15 +523,18 @@ SSVGD & PF\tabularnewline
 SSVGD & PF\tabularnewline
 \midrule
 \endhead
--7.373609 & -56.57699\tabularnewline
+-4.928 & -16.42\tabularnewline
 \bottomrule
 \end{longtable}
 
 \subsection{Discussion}\label{discussion}
 
-SSVGD seems to perform well in terms of effective sample size and log
-score when compared to traditional sequential monte carlo particle
-filtering.
+Sequential Stein Variational Gradient Descent offers a useful
+alternative to traditional particle filtering. We are able to increase
+the effective sample size using the same number of particles. We are
+also able to approximate the true likelihood of the Kalman Filter with a
+small number of particles. Further work is required to understand the
+impact of the bandwith heuristic on the resulting predictive intervals.
 
 \subsection{Bibliography}\label{bibliography}
 
