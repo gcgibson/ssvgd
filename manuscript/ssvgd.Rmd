@@ -97,26 +97,6 @@ Define $\theta = (\xi, \zeta)$ to be the full set of model parameters.
 
 
 
-## Filtering
-
-There are two types of filtering:
-
-1. sample of particles $x_{1:T}^{(k)} \sim f(x_{1:T} | y_{1:T})$
-2. sample of particles $x_{t}^{(k)} \sim f(x_{t} | y_{1:t})$ for each $t = 1, \ldots, T$
-
-Let's look at the second one.  Assume we have a sample $x_{t-1}^{(k)} \sim f(x_{t-1} | y_{1:t-1})$
-
-\begin{align*}
-p(x_{t} | y_{1:t}) &= \frac{f(x_t, y_t | y_{1:t-1})}{f(y_t | y_{1:t-1})} \\
- &\propto f(x_t, y_t | y_{1:t-1}) \\
- &= f(y_t | x_t) f(x_t | y_{1:t-1}) \\
- &= f(y_t | x_t) \int f(x_t, x_{t-1} | y_{1:t-1}) d x_{t-1} \\
- &= f(y_t | x_t) \int f(x_t | x_{t - 1}) f(x_{t-1} | y_{1:{t-1}}) dx_{t-1} \\
- &\approx f(y_t | x_t) \sum_{x_{t-1}^{(k)}} f(x_t | x_{t - 1}^{(k)})
-\end{align*}
-
-So $\log\{p(x_{t} | y_{1:t})\}$ is approximately proportional to $\log\{f(y_t | x_t)\} + \log\{\sum_{x_{t-1}^{(k)}} f(x_t | x_{t - 1}^{(k)})\}$
-
 
 ## Locally Level Gaussian Noise Model
 In order to demonstrate that the approximation is reasonable we evaluate the predictive accuracy under an analytically tractable model, the locally level Gaussian model. This model takes the form 
@@ -166,11 +146,11 @@ highPiSsvgdForecasts <- c()
 for (i in 1:nrow(aggregate_forecast)){
   meanSsvgdForecasts <- c(meanSsvgdForecasts,mean(aggregate_forecast[i,]))
   srted <- sort(aggregate_forecast[i,])
-  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[round(.05*length(data))+1])
-  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[round(.95*length(data))-1])
+  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[round(.05*length(srted))+1])
+  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[round(.95*length(srted))-1])
 }
 
-filter_results <- c(dropFirst(filt$f),11)
+filter_results <- c(dropFirst(filt$f),data[length(data)])
 
 library(ggplot2)
 
@@ -180,7 +160,7 @@ p1<- p1+ geom_line(data = data.frame(x=seq(1,length(filter_results)),y=filter_re
   geom_line(data=data.frame(x=seq(1,length(data)),y=data), aes(x = x, y = y), color = "cornflowerblue") +
   geom_ribbon(data=data.frame(x=seq(1,length(data)),y=filter_results),aes(x=x,ymin=filter_results-1.96*sqrt(v),ymax=filter_results+1.96*sqrt(v)),alpha=0.3)+
   xlab('data_date') +
-  ylab('count') + ylim(low=-2,high=10) 
+  ylab('count') + ylim(low=-5,high=15) 
 #print(p1)
 
 
@@ -190,11 +170,13 @@ p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=meanSsv
   geom_line(data=data.frame(x=seq(1,length(data)),y=data), aes(x = x, y = y), color = "cornflowerblue") +
   geom_ribbon(data=data.frame(x=seq(1,length(data)),y=meanSsvgdForecasts),aes(x=x,ymin=lowPiSsvgdForecasts,ymax=highPiSsvgdForecasts,alpha=0.3))+
   xlab('data_date') +
-  ylab('count')+ ylim(low=-2,high=10) 
+  ylab('count')+ ylim(low=-5,high=15) 
 #print(p)
 
 library(cowplot)
 plot_grid(p, p1, labels = c("SVGD","KF"))
+ggsave(filename="ssvgd_locally_level.pdf", plot=p)
+ggsave(filename="pf_locally_level.pdf", plot=p1)
 ```
 
 ## Poisson Observation Model With Seasonal State-Space Dynamics
@@ -264,8 +246,8 @@ highPiSsvgdForecasts <- c()
 for (i in 1:nrow(aggregate_forecast)){
   meanSsvgdForecasts <- c(meanSsvgdForecasts,mean(aggregate_forecast[i,]))
   srted <- sort(aggregate_forecast[i,])
-  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[round(.05*length(data))+1])
-  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[round(.95*length(data))-1])
+  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[round(.05*length(srted))+1])
+  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[round(.95*length(srted))-1])
 }
 
 lowPf <- pmax(0,seasonal_model_summary$x1$f$quant$`0.025`)
@@ -295,6 +277,8 @@ p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=exp(mea
 
 library(cowplot)
 plot_grid(p, p1, labels = c("SVGD","PF"))
+ggsave(filename="ssvgd_seasonal.pdf", plot=p)
+ggsave(filename="pf_seasonal.pdf", plot=p1)
 
 ```
 
@@ -309,7 +293,7 @@ require(rbiips)
 library(MCMCpack)
 locally_level_model_file = '/home/gcgibson/ssvgd/bug_files/locally_level_1.bug' # BUGS model filename
 
-ma_data = c(1,4)
+ma_data = c(1,4,0,3)
 t_max = length(ma_data)
 
 
@@ -330,7 +314,7 @@ print (summ_smc$x$f$mean)
 
 #Sys.setenv(PATH = paste("/Users/gcgibson/anaconda/bin", Sys.getenv("PATH"), sep=":"))
 
-exec_str <- 'python /home/gcgibson/ssvgd/python/llg.py '
+exec_str <- 'python /home/gcgibson/ssvgd/python/ssvgd.py '
 exec_str <- paste(exec_str, toString(ma_data))
 print (exec_str)
 ssvgdForecasts <- system(exec_str,intern=TRUE,wait = TRUE)
@@ -364,8 +348,8 @@ varSsvgdForecasts <- c()
 for (i in 1:nrow(aggregate_forecast)){
   meanSsvgdForecasts <- c(meanSsvgdForecasts,mean(aggregate_forecast[i,]))
   srted <- sort(aggregate_forecast[i,])
-  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[round(.05*length(data))+1])
-  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[round(.95*length(data))-1])
+  lowPiSsvgdForecasts <- c(lowPiSsvgdForecasts,srted[round(.05*length(srted))+1])
+  highPiSsvgdForecasts <- c(highPiSsvgdForecasts,srted[round(.95*length(srted))-1])
 }
 
 lowPf <-summ_smc$x$f$quant$`0.025`
@@ -396,6 +380,8 @@ p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=meanSsv
 
 library(cowplot)
 plot_grid(p, p1, labels = c("SVGD","PF"))
+ggsave(filename="ssvgd_divergent.pdf", plot=p)
+ggsave(filename="pf_divergent.pdf", plot=p1)
 
 print (varSsvgdForecasts)
 weights <- matrix(weights,nrow=length(ma_data),ncol=npart,byrow=TRUE)
@@ -422,7 +408,7 @@ library(knitr)
 ess_df <- data.frame(seq(1:length(ma_data)),effect_size,out_smc$x$f$ess)
 colnames(ess_df) <- c("t","SSVGD ESS", "PF ESS")
 kable(ess_df,caption="Effective Sample size")
-
+write.csv(ess_df, file = "ess_df.csv")
 ```
 
 #### Results
@@ -441,11 +427,16 @@ for (i in 1:nrow(weights)){
   log_p <- c(log_p,mean(weights[i,]))
 }
 
+exec_str <- 'python /home/gcgibson/ssvgd/python/kf_true.py '
+true_ll <- system(exec_str,intern=TRUE,wait = TRUE)
 
 
-ll_df <- data.frame(sum(log_p),out_smc$log_marg_like)
-colnames(ll_df) <- c("SSVGD","PF")
+
+ll_df <- data.frame(sum(log_p),out_smc$log_marg_like, as.double(true_ll[length(true_ll)]))
+colnames(ll_df) <- c("SSVGD","PF","KF")
 kable(ll_df,caption="Log Score")
+write.csv(ll_df, file = "ll_df.csv")
+
 ```
 
 

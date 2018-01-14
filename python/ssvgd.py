@@ -84,8 +84,6 @@ class StateSpaceModel():
             lnprob_theta_i = 1.0/(np.sqrt(2*np.pi*observation_variance))*np.exp(-.5*(1.0/observation_variance)*((time_series[t] - theta_i )**2))
 
             transition_sum = 0
-            if iter_ == 199:
-		weights.append(lnprob_theta_i)
 	    for theta_t_minus_1_i in theta_t_minus_1:
 
                 transition_sum += 1.0/(np.sqrt(2*np.pi*transition_variance))*np.exp(-.5*(1.0/transition_variance)*((theta_i - theta_t_minus_1_i )**2))
@@ -124,16 +122,21 @@ class StateSpaceModel():
 	for key in keylist:
     		return_matrix += d[key]
 
+	if iter_ == 999:
+		weights_tmp = []
+		for theta_i in theta:
+			weights_tmp.append(np.log(1.0/(np.sqrt(2*np.pi*observation_variance))) + -.5*(1.0/observation_variance)*((time_series[t] - theta_i )**2))
+		weights.append(weights_tmp)
 	return np.array(return_matrix)
     
 if __name__ == '__main__':
     filtered_means = []
     filtered_covs = []
     total_thetas = []
-    n_iter = 200
+    n_iter = 1000
 
-    time_series = np.round(np.power(np.sin(np.arange(2)+1),2)*10 + 10)
-    input_exists = False
+    time_series = []#np.round(np.power(np.sin(np.arange(2)+1),2)*10 + 10)
+    input_exists = True
     i = 1
     while input_exists:
         try:
@@ -163,14 +166,12 @@ if __name__ == '__main__':
       total_thetas.append(theta)
       filtered_means.append(np.mean(theta,axis=0)[0])
       filtered_covs.append(np.var(theta,axis=0)[0])
-    print (np.array(weights).shape) 
-    print (np.array(total_thetas).shape)
-    return_list = filtered_means + filtered_covs + model.weights
+   
     total_thetas = np.array(total_thetas).flatten()
     total_thetas = np.append(total_thetas,np.array(weights).flatten())
+    weights = np.array(weights)
     myList = ','.join(map(str,total_thetas))
     print (myList)
-    print (total_thetas.shape)
 
 
 
