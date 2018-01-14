@@ -1,3 +1,62 @@
+import numpy as np
+from scipy.spatial.distance import pdist, squareform
+weights = []
+class SVGD():
+
+    def __init__(self):
+        pass
+    
+    def svgd_kernel(self, theta, h = -1):
+        sq_dist = pdist(theta)
+        pairwise_dists = squareform(sq_dist)**2
+        if h < 0: # if h < 0, using median trick
+            h = np.median(pairwise_dists)  
+            
+            h = np.sqrt(0.5 * h / np.log(theta.shape[0]+1))
+
+        # compute the rbf kernel
+        Kxy = np.exp( -pairwise_dists / h**2 / 2)
+
+        dxkxy = -np.matmul(Kxy, theta)
+        sumkxy = np.sum(Kxy, axis=1)
+        for i in range(theta.shape[1]):
+            dxkxy[:, i] = dxkxy[:,i] + np.multiply(theta[:,i],sumkxy)
+        dxkxy = dxkxy / (h**2)
+        return (Kxy, dxkxy)
+    
+ 
+    def update(self, x0, t, theta_t_minus_1,time_series, dlnprob, n_iter = 10, stepsize = 1e-3, bandwidth = -1, alpha = 0.9, debug = False):
+        # Check input
+        if x0 is None or dlnprob is None:
+            raise ValueError('x0 or dlnprob cannot be None!')
+        
+        theta = np.copy(x0) 
+        
+        # adagrad with momentum
+        fudge_factor = 1e-6
+        historical_grad = 0
+        for iter in range(n_iter):
+            if debug and (iter+1) % 1000 == 0:
+                #print 'iter ' + str(iter+1) 
+                pass
+            lnpgrad = dlnprob(theta,theta_t_minus_1,time_series,t, iter)
+            # calculating the kernel matrix
+           # h = 0
+           
+            kxy, dxkxy = self.svgd_kernel(theta, h = -1)  
+            grad_theta = (np.matmul(kxy, lnpgrad) + dxkxy) / x0.shape[0]  
+            
+            # adagrad 
+            if iter == 0:
+                historical_grad = historical_grad + grad_theta ** 2
+            else:
+                historical_grad = alpha * historical_grad + (1 - alpha) * (grad_theta ** 2)
+            adj_grad = np.divide(grad_theta, fudge_factor+np.sqrt(historical_grad))
+            theta = theta + stepsize * adj_grad 
+            
+        return theta
+
+
 from autograd import numpy as np
 from autograd import grad, jacobian
 import numpy.matlib as nm
@@ -25,7 +84,9 @@ class StateSpaceModel():
             lnprob_theta_i = 1.0/(np.sqrt(2*np.pi*observation_variance))*np.exp(-.5*(1.0/observation_variance)*((time_series[t] - theta_i )**2))
 
             transition_sum = 0
-            for theta_t_minus_1_i in theta_t_minus_1:
+            if iter_ == 199:
+		weights.append(lnprob_theta_i)
+	    for theta_t_minus_1_i in theta_t_minus_1:
 
                 transition_sum += 1.0/(np.sqrt(2*np.pi*transition_variance))*np.exp(-.5*(1.0/transition_variance)*((theta_i - theta_t_minus_1_i )**2))
                 
@@ -110,3 +171,8 @@ if __name__ == '__main__':
     myList = ','.join(map(str,total_thetas))
     print (myList)
     print (total_thetas.shape)
+
+
+
+
+    
