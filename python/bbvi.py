@@ -7,6 +7,7 @@ import autograd.numpy as np
 import autograd.numpy.random as npr
 import autograd.scipy.stats.multivariate_normal as mvn
 import autograd.scipy.stats.norm as norm
+import random
 
 from autograd import grad
 from autograd.misc.optimizers import adam
@@ -118,9 +119,8 @@ if __name__ == '__main__':
         total_thetas.append(variational_params.tolist())
    
 
-print (time_series)
-print (total_thetas)
-print (weights)
+
+
 weights = np.array(weights).reshape((len(time_series),num_particles))
 
 ess = []
@@ -135,22 +135,46 @@ for i in range(len(time_series)):
 import matplotlib.pyplot as plt
 means = np.array(total_thetas)[:,0]
 sds = np.sqrt(np.exp(np.array(total_thetas)[:,1]))
-
+upper_pi = means+ 2*sds
+lower_pi = means- 2*sds
 plt.plot(range(len(time_series)),time_series,color='orange')
 plt.plot(range(len(time_series)),means,color='blue')
-plt.fill_between(range(len(time_series)),means+ 2*sds,means- 2*sds,alpha=.3)
+plt.fill_between(range(len(time_series)),upper_pi,lower_pi,alpha=.3)
 plt.show()
 
-
+pi = []
+for theta_i in range(len(total_thetas)):
+    samples_from_current_step = []
+    current_theta = total_thetas[theta_i]
+    samples_from_current_theta = np.random.normal(current_theta[0],np.exp(current_theta[1]),100)
+    for i in range(1000):
+        r_theta = np.random.choice(samples_from_current_theta)
+        samples_from_current_step.append(np.random.normal(r_theta,transition_variance,1))
     
-
-
+    samples_from_current_step = np.array(samples_from_current_step).reshape((-1))
+    samples_from_observation = []
+    for i in range(1000):
+        r_theta = np.random.choice(samples_from_current_step)
+        samples_from_observation.append(np.random.normal(r_theta,observation_variance,1))
         
     
+    pi.append(samples_from_observation)    
+
     
+pi = np.array(pi).reshape((len(total_thetas),1000))
+print (pi.shape)
+upper_pi = []
+lower_pi = []
+for p in pi:
+    upper_pi.append(np.percentile(p,95))
+    lower_pi.append(np.percentile(p,5))
     
-    
-    
-    
+print (upper_pi)
+print (lower_pi)
+
+time_series_shifted = time_series[1:].tolist() + [10]
+plt.plot(range(len(time_series_shifted)),time_series_shifted,color='orange')
+plt.fill_between(range(len(time_series_shifted)),upper_pi,lower_pi,alpha=.3)
+plt.show()
     
     
