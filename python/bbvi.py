@@ -78,7 +78,7 @@ if __name__ == '__main__':
     total_thetas = []
     
 
-    #time_series = np.round(np.power(np.sin(np.arange(10)+1),2)*10 + 10)
+    #
     time_series = []
     for i in range(10):
         if i == 0:

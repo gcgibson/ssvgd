@@ -37,14 +37,15 @@ class SSM:
         return theta_new
     
 if __name__ == '__main__':
-    time_series = np.random.rand(10)
+    time_series =np.round(np.power(np.sin(np.arange(100)+1),2)*10 + 10)
     
     model = SSM(time_series)
     
     x0 = np.random.multivariate_normal(np.zeros(len(time_series)),np.eye(len(time_series)),100);
-    theta = SVGD().update(x0, model.dlnprob, n_iter=1000, stepsize=0.01)
+    theta = SVGD().update(x0, model.dlnprob, n_iter=2000, stepsize=0.01)
     import matplotlib.pyplot as plt
     
     plt.plot(range(len(time_series)), np.mean(theta,axis=0))
     plt.plot(range(len(time_series)), time_series)
+    plt.fill_between(range(len(time_series)),np.percentile(theta,5,axis=0),np.percentile(theta,95,axis=0),alpha=.3)
     plt.show()
