@@ -3,7 +3,6 @@ from scipy.spatial.distance import pdist, squareform
 weights = []
 
 
-import autograd.numpy as np
 import autograd.numpy.random as npr
 import autograd.scipy.stats.multivariate_normal as mvn
 import autograd.scipy.stats.norm as norm
@@ -79,7 +78,15 @@ if __name__ == '__main__':
     total_thetas = []
     
 
-    time_series = np.round(np.power(np.sin(np.arange(10)+1),2)*10 + 10)
+    #time_series = np.round(np.power(np.sin(np.arange(10)+1),2)*10 + 10)
+    time_series = []
+    for i in range(10):
+        if i == 0:
+            x_sim = np.random.normal(0,1,1)
+        else:
+            x_sim = np.random.normal(x_sim,10,1)
+        time_series.append(np.random.normal(x_sim,10,1)[0])
+    time_series = np.array(time_series).reshape((-1))
     input_exists = False
     i = 1
     while input_exists:
@@ -91,7 +98,7 @@ if __name__ == '__main__':
 
 
     model = StateSpaceModel()
-    num_particles = 100
+    num_particles = 100    
     x0 = np.random.normal(-2,1,[num_particles,1]).astype(float)
     weights = [x0]
     D = 1
@@ -100,7 +107,7 @@ if __name__ == '__main__':
     init_mean    = -1 * np.ones(D)
     init_log_std = -5 * np.ones(D)
     init_var_params = np.concatenate([init_mean, init_log_std])
-    variational_params = adam(gradient, init_var_params, step_size=0.1, num_iters=500)
+    variational_params = adam(gradient, init_var_params, step_size=0.1, num_iters=1000)
     total_thetas.append(variational_params.tolist())
     #theta = p(x_0|y_0)
     
@@ -115,7 +122,7 @@ if __name__ == '__main__':
         init_mean    = -1 * np.ones(D)
         init_log_std = -5 * np.ones(D)
         init_var_params = np.concatenate([init_mean, init_log_std])
-        variational_params = adam(gradient, init_var_params, step_size=0.1, num_iters=500)
+        variational_params = adam(gradient, init_var_params, step_size=0.1, num_iters=1000)
         total_thetas.append(variational_params.tolist())
    
 
@@ -146,22 +153,17 @@ pi = []
 for theta_i in range(len(total_thetas)):
     samples_from_current_step = []
     current_theta = total_thetas[theta_i]
-    samples_from_current_theta = np.random.normal(current_theta[0],np.exp(current_theta[1]),100)
-    for i in range(1000):
-        r_theta = np.random.choice(samples_from_current_theta)
-        samples_from_current_step.append(np.random.normal(r_theta,transition_variance,1))
     
-    samples_from_current_step = np.array(samples_from_current_step).reshape((-1))
-    samples_from_observation = []
-    for i in range(1000):
-        r_theta = np.random.choice(samples_from_current_step)
-        samples_from_observation.append(np.random.normal(r_theta,observation_variance,1))
+    for i in range(10000):
+        tmp1 = np.random.normal(current_theta[0],np.exp(current_theta[1]),1)[0]
+        tmp2 = np.random.normal(tmp1,transition_variance,1)[0]
+        samples_from_current_step.append(np.random.normal(tmp2,observation_variance,1))
         
     
-    pi.append(samples_from_observation)    
+    pi.append(samples_from_current_step)    
 
     
-pi = np.array(pi).reshape((len(total_thetas),1000))
+pi = np.array(pi).reshape((len(total_thetas),10000))
 print (pi.shape)
 upper_pi = []
 lower_pi = []
