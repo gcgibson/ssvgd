@@ -37,9 +37,6 @@ def black_box_variational_inference(logprob, D, last_theta, time_series, current
     return variational_objective, gradient, unpack_params
 
 
-from autograd import numpy as np
-from autograd import grad, jacobian
-import numpy.matlib as nm
 from svgd import SVGD
 import sys
 #from mpltools import style
@@ -74,8 +71,22 @@ class StateSpaceModel():
     
 if __name__ == '__main__':
     ## now we need to get the real data
+    with open("/Users/gcgibson/Stein-Variational-Gradient-Descent/python/dat.json") as f:
+        dat = f.read()
     
     
+    dat = dat.split(",")
+    time = []
+    cases = []
+    count = 0
+    for elm in dat:
+        if count % 2 ==0:
+            time.append(elm.split(":")[1])
+        else:
+            cases.append(int(elm.split(":")[1].replace("}","").replace(']"]\n',"")))
+        count +=1
+    
+    time
     
     
     
@@ -92,7 +103,7 @@ if __name__ == '__main__':
         else:
             x_sim = np.random.normal(x_sim,10,1)
         time_series.append(np.random.normal(x_sim,10,1)[0])
-    time_series = np.array(time_series).reshape((-1))
+    time_series = np.array(cases)
     input_exists = False
     i = 1
     while input_exists:
