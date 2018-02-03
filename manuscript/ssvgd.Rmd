@@ -293,14 +293,14 @@ require(rbiips)
 library(MCMCpack)
 locally_level_model_file = '/home/gcgibson/ssvgd/bug_files/locally_level_1.bug' # BUGS model filename
 
-ma_data = c(1,4,0,3)
+ma_data = c(1,4,0,3,10,20,4,3,7,40,1)
 t_max = length(ma_data)
 
 
 #setting the mean value of the initial count to 1400
 locally_level_data = list(t_max=t_max, y = ma_data,  mean_x_init=-2)
 locally_level_model = biips_model(locally_level_model_file, data=locally_level_data,sample_data = FALSE)
-n_part = 100 # Number of particles
+n_part = 1000 # Number of particles
 variables = c('x') # Variables to be monitored
 mn_type = 'fs'; rs_type = 'stratified'; rs_thres = 0.5 # Optional parameters
 
@@ -320,7 +320,7 @@ print (exec_str)
 ssvgdForecasts <- system(exec_str,intern=TRUE,wait = TRUE)
 
 
-npart <- 100
+npart <- 1000
 
 count <- 1
 ssvgdForecasts <- strsplit(ssvgdForecasts[1],",")
@@ -363,7 +363,7 @@ p1<- p1+ geom_line(data = data.frame(x=seq(1,length(summ_smc$x$f$mean)),y=summ_s
   geom_line(data=data.frame(x=seq(1,length(ma_data)),y=ma_data), aes(x = x, y = y), color = "cornflowerblue") +
   geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=summ_smc$x$f$mean),aes(x=x,ymin=lowPf,ymax=highPf),alpha=0.3)+
   xlab('data_date') +
-  ylab('count') + ylim(low=-10,high=10) 
+  ylab('count')# + ylim(low=-10,high=10) 
 #print(p1)
 
 
@@ -375,7 +375,7 @@ p<- p+ geom_line(data = data.frame(x=seq(1,length(meanSsvgdForecasts)),y=meanSsv
   geom_line(data=data.frame(x=seq(1,length(ma_data)),y=ma_data), aes(x = x, y = y), color = "cornflowerblue") +
   geom_ribbon(data=data.frame(x=seq(1,length(ma_data)),y=meanSsvgdForecasts),aes(x=x,ymin=lowPiSsvgdForecasts,ymax=highPiSsvgdForecasts,alpha=0.3))+
   xlab('data_date') +
-  ylab('count') +ylim(low=-10,high=10) 
+  ylab('count') #+ylim(low=-10,high=10) 
 #print(p)
 
 library(cowplot)

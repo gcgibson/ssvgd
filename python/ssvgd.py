@@ -108,7 +108,7 @@ class StateSpaceModel():
         jobs = []
 
 	# we need to parallelize this to get realistic speeds
-    	theta_split = np.split(theta,len(theta)/5)
+    	theta_split = np.split(theta,len(theta)/10)
 	for i in range(len(theta_split)):
 		p = Process(target=f, args=(d,i,theta_split[i],theta_t_minus_1,time_series,t,iter_))
 		jobs.append(p)
@@ -122,7 +122,7 @@ class StateSpaceModel():
 	for key in keylist:
     		return_matrix += d[key]
 
-	if iter_ == 999:
+	if iter_ == 4999:
 		weights_tmp = []
 		for theta_i in theta:
 			weights_tmp.append(np.log(1.0/(np.sqrt(2*np.pi*observation_variance))) + -.5*(1.0/observation_variance)*((time_series[t] - theta_i )**2))
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     filtered_means = []
     filtered_covs = []
     total_thetas = []
-    n_iter = 1000
+    n_iter = 5000
 
     time_series = []#np.round(np.power(np.sin(np.arange(2)+1),2)*10 + 10)
     input_exists = True
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
 
     model = StateSpaceModel()
-    num_particles = 100
+    num_particles = 1000
     x0 = np.random.normal(-2,1,[num_particles,1]).astype(float)
     weights = []
     svgd = SVGD()
